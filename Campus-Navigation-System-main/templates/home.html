@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes"/>
+  <title>Select Destination - Kyambogo Navigator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7fa, #e4e8f0);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #0d2b4e, #1a4a7a);
+      color: white;
+      padding: 20px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .back-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 45px;
+      height: 45px;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .back-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateX(-3px);
+    }
+    
+    .header-title h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    .header-title p {
+      margin: 5px 0 0;
+      opacity: 0.8;
+      font-size: 0.9rem;
+    }
+    
+    .search-box {
+      background: white;
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 25px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 10px;
+    }
+    
+    .search-box i {
+      color: #0d2b4e;
+      font-size: 1.2rem;
+      margin-top: 10px;
+    }
+    
+    .search-box input {
+      border: none;
+      outline: none;
+      width: 100%;
+      font-size: 1rem;
+      padding: 8px 0;
+    }
+    
+    .search-box input::placeholder {
+      color: #aaa;
+    }
+    
+    .categories {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .category-tag {
+      background: white;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #0d2b4e;
+      white-space: nowrap;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .category-tag:hover, .category-tag.active {
+      background: #0d2b4e;
+      color: white;
+      border-color: #ffd700;
+    }
+    
+    .category-tag i {
+      margin-right: 8px;
+    }
+    
+    .locations-container {
+      max-height: calc(100vh - 300px);
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+    
+    .category-section {
+      margin-bottom: 25px;
+    }
+    
+    .category-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #0d2b4e;
+      margin-bottom: 15px;
+      padding-left: 10px;
+      border-left: 4px solid #ffd700;
+    }
+    
+    .location-card {
+      background: white;
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+      cursor: pointer;
+      border: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .location-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      border-color: #ffd700;
+    }
+    
+    .location-icon {
+      width: 45px;
+      height: 45px;
+      background: linear-gradient(135deg, #0d2b4e, #1a4a7a);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffd700;
+      font-size: 1.2rem;
+    }
+    
+    .location-info {
+      flex: 1;
+    }
+    
+    .location-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    
+    .location-meta {
+      display: flex;
+      gap: 15px;
+      font-size: 0.8rem;
+      color: #666;
+    }
+    
+    .location-meta i {
+      margin-right: 3px;
+      color: #ffd700;
+    }
+    
+    .select-btn {
+      background: none;
+      border: none;
+      color: #0d2b4e;
+      font-size: 1.2rem;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .select-btn:hover {
+      color: #ffd700;
+      transform: scale(1.2);
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      color: #666;
+      font-size: 0.8rem;
+    }
+    
+    @media (max-width: 480px) {
+      .header {
+        padding: 15px;
+      }
+      
+      .header-title h2 {
+        font-size: 1.2rem;
+      }
+      
+      .category-tag {
+        padding: 8px 15px;
+        font-size: 0.8rem;
+      }
+      
+      .location-card {
+        padding: 12px;
+      }
+      
+      .location-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="back-btn" onclick="window.location.href='/'">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="header-title">
+        <h2>Where are you going?</h2>
+        <p><i class="fas fa-map-marker-alt"></i> Select your destination</p>
+      </div>
+    </div>
+    
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search for a location..." onkeyup="filterLocations()">
+    </div>
+    
+    <div class="categories" id="categories">
+      <span class="category-tag active" onclick="filterCategory('all')"><i class="fas fa-map"></i> All</span>
+      {% for category, places in categories.items() %}
+      <span class="category-tag" onclick="filterCategory('{{ category }}')">
+        {% if category == "Entrances" %}<i class="fas fa-door-open"></i>
+        {% elif category == "Administration" %}<i class="fas fa-building"></i>
+        {% elif category == "Libraries" %}<i class="fas fa-book"></i>
+        {% elif category == "Faculties & Schools" %}<i class="fas fa-school"></i>
+        {% elif category == "Student Accommodation" %}<i class="fas fa-bed"></i>
+        {% elif category == "Dining & Shopping" %}<i class="fas fa-utensils"></i>
+        {% elif category == "Auditoriums & Halls" %}<i class="fas fa-chalkboard"></i>
+        {% elif category == "Sports & Recreation" %}<i class="fas fa-futbol"></i>
+        {% elif category == "Medical" %}<i class="fas fa-hospital"></i>
+        {% else %}<i class="fas fa-map-pin"></i>{% endif %}
+        {{ category }}
+      </span>
+      {% endfor %}
+    </div>
+    
+    <form id="destinationForm" method="post" action="/result">
+      <input type="hidden" name="destination" id="selectedDestination">
+      <div class="locations-container" id="locationsContainer">
+        {% for category, places in categories.items() %}
+        <div class="category-section" data-category="{{ category }}">
+          <div class="category-title">
+            {% if category == "Entrances" %}<i class="fas fa-door-open"></i>
+            {% elif category == "Administration" %}<i class="fas fa-building"></i>
+            {% elif category == "Libraries" %}<i class="fas fa-book"></i>
+            {% elif category == "Faculties & Schools" %}<i class="fas fa-school"></i>
+            {% elif category == "Student Accommodation" %}<i class="fas fa-bed"></i>
+            {% elif category == "Dining & Shopping" %}<i class="fas fa-utensils"></i>
+            {% elif category == "Auditoriums & Halls" %}<i class="fas fa-chalkboard"></i>
+            {% elif category == "Sports & Recreation" %}<i class="fas fa-futbol"></i>
+            {% elif category == "Medical" %}<i class="fas fa-hospital"></i>
+            {% else %}<i class="fas fa-map-pin"></i>{% endif %}
+            {{ category }}
+          </div>
+          
+          {% for place in places %}
+          <div class="location-card" onclick="selectDestination('{{ place }}')">
+            <div class="location-icon">
+              {% if "Gate" in place %}<i class="fas fa-door-open"></i>
+              {% elif "Library" in place %}<i class="fas fa-book"></i>
+              {% elif "Hostel" in place %}<i class="fas fa-bed"></i>
+              {% elif "Cafeteria" in place or "Canteen" in place %}<i class="fas fa-utensils"></i>
+              {% elif "Bank" in place %}<i class="fas fa-coins"></i>
+              {% elif "Sports" in place or "Court" in place %}<i class="fas fa-futbol"></i>
+              {% elif "Health" in place or "Clinic" in place %}<i class="fas fa-hospital"></i>
+              {% elif "Auditorium" in place %}<i class="fas fa-chalkboard"></i>
+              {% else %}<i class="fas fa-map-marker-alt"></i>{% endif %}
+            </div>
+            <div class="location-info">
+              <div class="location-name">{{ place }}</div>
+              <div class="location-meta">
+                <span><i class="fas fa-walking"></i> Walking distance</span>
+                <span><i class="fas fa-clock"></i> 5-15 min</span>
+              </div>
+            </div>
+            <button type="button" class="select-btn" onclick="event.stopPropagation(); selectDestination('{{ place }}')">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </form>
+    
+    <div class="footer">
+      <i class="fas fa-location-arrow"></i> Your location will be used for navigation
+    </div>
+  </div>
+  
+  <script>
+    function selectDestination(place) {
+      document.getElementById('selectedDestination').value = place;
+      document.getElementById('destinationForm').submit();
+    }
+    
+    function filterCategory(category) {
+      // Update active category
+      document.querySelectorAll('.category-tag').forEach(tag => {
+        tag.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Filter sections
+      const sections = document.querySelectorAll('.category-section');
+      if (category === 'all') {
+        sections.forEach(section => {
+          section.style.display = 'block';
+        });
+      } else {
+        sections.forEach(section => {
+          if (section.dataset.category === category) {
+            section.style.display = 'block';
+          } else {
+            section.style.display = 'none';
+          }
+        });
+      }
+    }
+    
+    function filterLocations() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const locationCards = document.querySelectorAll('.location-card');
+      
+      locationCards.forEach(card => {
+        const locationName = card.querySelector('.location-name').textContent.toLowerCase();
+        const section = card.closest('.category-section');
+        
+        if (locationName.includes(searchTerm)) {
+          card.style.display = 'flex';
+          section.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      
+      // Hide empty sections
+      document.querySelectorAll('.category-section').forEach(section => {
+        const visibleCards = section.querySelectorAll('.location-card[style="display: flex;"]');
+        if (visibleCards.length === 0) {
+          section.style.display = 'none';
+        }
+      });
+    }
+    
+    // Reset filters
+    document.getElementById('searchInput').addEventListener('search', function() {
+      if (this.value === '') {
+        location.reload();
+      }
+    });
+  </script>
+</body>
+</html>
