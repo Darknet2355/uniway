@@ -3,821 +3,764 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Route to {{ destination_name }}</title>
-  
-  <!-- Leaflet CSS -->
+  <title>Route to {{ destination_name }} – KYU Navigator</title>
+
+  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.locatecontrol@0.79.0/dist/L.Control.Locate.min.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet.locatecontrol@0.79.0/dist/L.Control.Locate.min.js"></script>
-  
+
+  <!-- Icons & Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --navy: #0d2b4e;
+      --navy-light: #1a4a7a;
+      --gold: #f5c518;
+      --blue: #2196F3;
+      --green: #4caf50;
+      --red: #f44336;
     }
-    
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     html, body {
       height: 100%;
       width: 100%;
       overflow: hidden;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Outfit', sans-serif;
     }
-    
+
     body {
       display: flex;
       flex-direction: column;
-      background: #f0f2f5;
+      background: #eef1f5;
     }
-    
-    /* Header */
+
+    /* ── Header ── */
     .header {
-      background: linear-gradient(135deg, #0d2b4e, #1a4a7a);
+      background: linear-gradient(135deg, var(--navy), var(--navy-light));
       color: white;
-      padding: 12px 15px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       gap: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
       z-index: 1000;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.25);
+      flex-shrink: 0;
     }
-    
+
     .back-btn {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: white;
       width: 38px;
       height: 38px;
+      background: rgba(255,255,255,0.18);
+      border: none;
       border-radius: 10px;
-      font-size: 1.1rem;
+      color: white;
+      font-size: 1rem;
       cursor: pointer;
-      transition: all 0.3s;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      transition: background 0.2s;
     }
-    
-    .back-btn:hover {
-      background: rgba(255,255,255,0.3);
+
+    .back-btn:hover { background: rgba(255,255,255,0.3); }
+
+    .header-info { flex: 1; min-width: 0; }
+
+    .header-info h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
     }
-    
-    .header-content {
-      flex: 1;
-      min-width: 0;
-    }
-    
-    .header-content h3 {
-      font-size: 1rem;
-      margin-bottom: 3px;
+
+    #statusText {
+      font-size: 0.72rem;
+      opacity: 0.85;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    
-    .header-content p {
-      font-size: 0.75rem;
-      opacity: 0.9;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    .status-badge {
-      background: #ffd700;
-      color: #0d2b4e;
-      padding: 4px 10px;
+
+    .gps-badge {
+      background: var(--gold);
+      color: var(--navy);
+      padding: 5px 10px;
       border-radius: 20px;
-      font-size: 0.7rem;
-      font-weight: 600;
+      font-size: 0.68rem;
+      font-weight: 700;
       white-space: nowrap;
       flex-shrink: 0;
     }
-    
-    /* Map Container */
-    .map-wrapper {
+
+    /* ── Map ── */
+    .map-wrap {
       flex: 1;
       position: relative;
       overflow: hidden;
     }
-    
+
     #map {
       width: 100%;
       height: 100%;
-      background: #e0e0e0;
     }
-    
-    /* Compass */
-    .compass-indicator {
+
+    /* ── Permission overlay ── */
+    .perm-overlay {
       position: absolute;
-      top: 15px;
-      right: 15px;
-      width: 44px;
-      height: 44px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      inset: 0;
+      background: rgba(13,43,78,0.85);
+      backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
-      color: #0d2b4e;
-      z-index: 1000;
-      cursor: pointer;
-      transition: all 0.3s;
-      border: 2px solid #ffd700;
+      z-index: 3000;
+      padding: 24px;
     }
-    
-    /* Location Permission Overlay */
-    .location-permission-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(5px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      padding: 20px;
-    }
-    
-    .permission-card {
+
+    .perm-card {
       background: white;
-      border-radius: 20px;
-      padding: 30px 20px;
+      border-radius: 22px;
+      padding: 32px 24px;
       text-align: center;
       max-width: 300px;
       width: 100%;
     }
-    
-    .permission-card i {
-      font-size: 3rem;
-      color: #0d2b4e;
-      margin-bottom: 15px;
+
+    .perm-card .perm-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--navy), var(--navy-light));
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
     }
-    
-    .permission-card h4 {
-      color: #0d2b4e;
-      margin-bottom: 10px;
+
+    .perm-card .perm-icon i {
+      font-size: 1.8rem;
+      color: var(--gold);
     }
-    
-    .permission-card p {
+
+    .perm-card h4 {
+      color: var(--navy);
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .perm-card p {
       color: #666;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       margin-bottom: 20px;
+      line-height: 1.5;
     }
-    
-    .permission-btn {
-      background: #ffd700;
+
+    .perm-btn {
+      background: var(--gold);
       border: none;
-      padding: 12px 25px;
-      border-radius: 30px;
-      color: #0d2b4e;
-      font-weight: 600;
+      padding: 13px 24px;
+      border-radius: 12px;
+      color: var(--navy);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
       width: 100%;
       cursor: pointer;
-      border: 2px solid #ffd700;
+      transition: opacity 0.2s;
     }
-    
-    .permission-btn:hover {
-      background: #ffed4a;
-    }
-    
-    /* Route Info Panel */
-    .route-info {
+
+    .perm-btn:hover { opacity: 0.9; }
+
+    /* ── Loading spinner ── */
+    .loading-overlay {
       position: absolute;
-      bottom: 15px;
-      left: 15px;
-      right: 15px;
-      background: white;
-      border-radius: 20px;
-      padding: 15px;
-      box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
-      z-index: 1000;
-      transition: transform 0.3s;
-      max-height: 35vh;
-      overflow-y: auto;
-    }
-    
-    .route-header {
+      inset: 0;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(4px);
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      cursor: pointer;
-    }
-    
-    .route-stats {
-      display: flex;
-      gap: 20px;
-    }
-    
-    .stat {
-      text-align: center;
-    }
-    
-    .stat-value {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #0d2b4e;
-    }
-    
-    .stat-label {
-      font-size: 0.65rem;
-      color: #666;
-      text-transform: uppercase;
-    }
-    
-    .toggle-btn {
-      background: none;
-      border: none;
-      font-size: 1.1rem;
-      color: #0d2b4e;
-      cursor: pointer;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      z-index: 2500;
+      gap: 14px;
     }
-    
-    .instructions {
-      border-top: 1px solid #eee;
-      padding-top: 12px;
-    }
-    
-    .instruction-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid #f0f0f0;
-      font-size: 0.85rem;
-    }
-    
-    .instruction-icon {
-      width: 28px;
-      height: 28px;
-      background: #f0f2f5;
+
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #e0e0e0;
+      border-top-color: var(--navy);
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #0d2b4e;
-      flex-shrink: 0;
+      animation: spin 0.9s linear infinite;
     }
-    
-    .instruction-text {
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-overlay p {
+      color: var(--navy);
+      font-size: 0.9rem;
+      font-weight: 600;
     }
-    
-    .instruction-distance {
-      font-size: 0.75rem;
-      color: #666;
-      font-weight: 500;
-      flex-shrink: 0;
-    }
-    
-    /* Control Buttons */
-    .control-buttons {
+
+    /* ── Map controls ── */
+    .map-controls {
       position: absolute;
-      bottom: 120px;
-      right: 15px;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
       display: flex;
       flex-direction: column;
       gap: 8px;
       z-index: 1000;
     }
-    
-    .control-btn {
-      width: 44px;
-      height: 44px;
+
+    .map-btn {
+      width: 42px;
+      height: 42px;
       border-radius: 12px;
       background: white;
       border: none;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-      color: #0d2b4e;
-      font-size: 1.1rem;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+      color: var(--navy);
+      font-size: 1rem;
       cursor: pointer;
-      transition: all 0.3s;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid transparent;
+      transition: all 0.2s;
     }
-    
-    .control-btn:hover {
-      border-color: #ffd700;
-    }
-    
-    .control-btn.active {
-      background: #0d2b4e;
-      color: #ffd700;
-    }
-    
-    /* Loading Overlay */
-    .loading-overlay {
+
+    .map-btn:hover { background: var(--navy); color: var(--gold); }
+    .map-btn.active { background: var(--navy); color: var(--gold); }
+
+    /* ── Bottom route panel ── */
+    .route-panel {
       position: absolute;
-      top: 0;
+      bottom: 0;
       left: 0;
       right: 0;
-      bottom: 0;
-      background: rgba(255,255,255,0.9);
+      background: white;
+      border-radius: 22px 22px 0 0;
+      box-shadow: 0 -6px 30px rgba(0,0,0,0.18);
+      z-index: 1000;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      max-height: 55vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .route-panel.collapsed {
+      transform: translateY(calc(100% - 70px));
+    }
+
+    .panel-handle {
+      text-align: center;
+      padding: 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .handle-bar {
+      width: 40px;
+      height: 4px;
+      background: #e0e0e0;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    .panel-stats {
+      display: flex;
+      align-items: center;
+      padding: 0 20px 14px;
+      gap: 20px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1;
+    }
+
+    .stat-lbl {
+      font-size: 0.62rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 36px;
+      background: #eee;
+    }
+
+    .speak-btn {
+      margin-left: auto;
+      width: 42px;
+      height: 42px;
+      background: var(--navy);
+      border: none;
+      border-radius: 11px;
+      color: var(--gold);
+      font-size: 1rem;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 2000;
-      backdrop-filter: blur(5px);
+      flex-shrink: 0;
     }
-    
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #f0f0f0;
-      border-top-color: #0d2b4e;
+
+    /* Source badge */
+    .source-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .source-tag.osrm { background: rgba(76,175,80,0.12); color: #388e3c; }
+    .source-tag.direct { background: rgba(255,152,0,0.12); color: #e65100; }
+
+    /* ── Instructions list ── */
+    .instructions-wrap {
+      overflow-y: auto;
+      flex: 1;
+      padding: 0 16px 20px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .instr-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .instr-icon {
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      background: #f0f3f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--navy);
+      font-size: 0.85rem;
+      flex-shrink: 0;
     }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+
+    .instr-text {
+      flex: 1;
+      font-size: 0.85rem;
+      color: #333;
+      line-height: 1.35;
     }
-    
-    @media (max-width: 480px) {
-      .header {
-        padding: 10px;
-      }
-      
-      .control-buttons {
-        bottom: 100px;
-        right: 10px;
-      }
-      
-      .control-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-      }
-      
-      .compass-indicator {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
-        top: 10px;
-        right: 10px;
-      }
-      
-      .route-stats {
-        gap: 15px;
-      }
-      
-      .stat-value {
-        font-size: 1.2rem;
-      }
+
+    .instr-dist {
+      font-size: 0.72rem;
+      color: #999;
+      white-space: nowrap;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    /* Route type tag in corner */
+    .route-type-corner {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: white;
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--navy);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+      z-index: 1000;
+      display: none;
+    }
+
+    @media (max-width: 380px) {
+      .stat-val { font-size: 1.25rem; }
+      .map-btn { width: 38px; height: 38px; }
     }
   </style>
 </head>
 <body>
+
+  <!-- Header -->
   <div class="header">
-    <button class="back-btn" onclick="window.location.href='/home'">
+    <button class="back-btn" onclick="history.back()">
       <i class="fas fa-arrow-left"></i>
     </button>
-    <div class="header-content">
-      <h3><i class="fas fa-map-pin"></i> {{ destination_name }}</h3>
-      <p id="status">Getting your location...</p>
+    <div class="header-info">
+      <h3><i class="fas fa-map-pin" style="color:var(--gold);margin-right:6px"></i>{{ destination_name }}</h3>
+      <div id="statusText">Acquiring your location…</div>
     </div>
-    <div class="status-badge" id="accuracy-badge">
-      <i class="fas fa-satellite"></i> GPS
-    </div>
+    <div class="gps-badge" id="gpsBadge"><i class="fas fa-satellite"></i> GPS</div>
   </div>
 
-  <div class="map-wrapper">
+  <!-- Map area -->
+  <div class="map-wrap">
     <div id="map"></div>
-    
-    <!-- Compass -->
-    <div class="compass-indicator" id="compass" title="North">
-      <i class="fas fa-compass"></i>
-    </div>
-    
-    <!-- Location Permission Overlay (shown when needed) -->
-    <div class="location-permission-overlay" id="permissionOverlay" style="display: none;">
-      <div class="permission-card">
-        <i class="fas fa-location-dot"></i>
-        <h4>Location Access Required</h4>
-        <p>Please enable location access to see routes and navigate around campus.</p>
-        <button class="permission-btn" onclick="requestLocationPermission()">
-          <i class="fas fa-location-arrow"></i> Enable Location
+
+    <!-- Route type label -->
+    <div class="route-type-corner" id="routeTypeCorner"></div>
+
+    <!-- Location permission prompt -->
+    <div class="perm-overlay" id="permOverlay" style="display:none">
+      <div class="perm-card">
+        <div class="perm-icon"><i class="fas fa-location-dot"></i></div>
+        <h4>Enable Location</h4>
+        <p>Location access is needed so we can calculate the best walking route to your destination.</p>
+        <button class="perm-btn" onclick="requestLocation()">
+          <i class="fas fa-location-arrow"></i> Allow Location Access
         </button>
       </div>
     </div>
-    
-    <!-- Control Buttons -->
-    <div class="control-buttons">
-      <button class="control-btn" id="locate-btn" title="Center on my location">
+
+    <!-- Loading -->
+    <div class="loading-overlay" id="loadingOverlay" style="display:none">
+      <div class="spinner"></div>
+      <p>Finding best route…</p>
+    </div>
+
+    <!-- Map controls -->
+    <div class="map-controls">
+      <button class="map-btn" id="locateBtn" title="Center on me" onclick="centerOnUser()">
         <i class="fas fa-location-arrow"></i>
       </button>
-      <button class="control-btn" id="zoom-in" title="Zoom in">
+      <button class="map-btn" onclick="map.setZoom(map.getZoom()+1)" title="Zoom in">
         <i class="fas fa-plus"></i>
       </button>
-      <button class="control-btn" id="zoom-out" title="Zoom out">
+      <button class="map-btn" onclick="map.setZoom(map.getZoom()-1)" title="Zoom out">
         <i class="fas fa-minus"></i>
       </button>
-      <button class="control-btn" id="speak-btn" title="Speak route info">
-        <i class="fas fa-volume-up"></i>
+      <button class="map-btn" id="fitBtn" title="Fit route" onclick="fitRoute()">
+        <i class="fas fa-expand"></i>
       </button>
     </div>
-    
-    <!-- Route Info Panel -->
-    <div class="route-info" id="routeInfo">
-      <div class="route-header" onclick="toggleRouteInfo()">
-        <div class="route-stats" id="routeStats">
-          <div class="stat">
-            <div class="stat-value" id="distance">0.0</div>
-            <div class="stat-label">KM</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value" id="duration">0</div>
-            <div class="stat-label">MIN</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value" id="accuracy">0</div>
-            <div class="stat-label">±M</div>
-          </div>
-        </div>
-        <div class="toggle-btn" id="toggleBtn">
-          <i class="fas fa-chevron-up"></i>
-        </div>
+
+    <!-- Route info panel -->
+    <div class="route-panel collapsed" id="routePanel">
+      <div class="panel-handle" onclick="togglePanel()">
+        <span class="handle-bar"></span>
       </div>
-      
-      <div class="instructions" id="instructions">
-        <div class="instruction-item">
-          <div class="instruction-icon"><i class="fas fa-circle-info"></i></div>
-          <div class="instruction-text">Waiting for route...</div>
+
+      <div class="panel-stats" onclick="togglePanel()">
+        <div class="stat-item">
+          <div class="stat-val" id="distVal">—</div>
+          <div class="stat-lbl">KM</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-val" id="durVal">—</div>
+          <div class="stat-lbl">MIN</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-val" id="accVal">—</div>
+          <div class="stat-lbl">±M</div>
+        </div>
+        <button class="speak-btn" onclick="event.stopPropagation(); speakRoute()">
+          <i class="fas fa-volume-up"></i>
+        </button>
+      </div>
+
+      <div class="instructions-wrap" id="instrWrap">
+        <div class="instr-item">
+          <div class="instr-icon"><i class="fas fa-circle-info"></i></div>
+          <div class="instr-text">Waiting for route…</div>
         </div>
       </div>
     </div>
-  </div>
-
-  <div class="loading-overlay" id="loading" style="display: none;">
-    <div class="spinner"></div>
   </div>
 
   <script>
-    const DEST_LAT = {{ dest_lat }};
-    const DEST_LON = {{ dest_lon }};
+    // ── Constants from Flask ──────────────────────────────────────────────────
+    const DEST_LAT  = {{ dest_lat }};
+    const DEST_LON  = {{ dest_lon }};
     const DEST_NAME = "{{ destination_name }}";
 
-    let map, userMarker, routeLayer, userAccuracyCircle;
-    let currentHeading = 0;
-    let routeInfoMinimized = false;
-    let currentLocation = null;
-    let locationWatchId = null;
+    // ── State ─────────────────────────────────────────────────────────────────
+    let userMarker = null, accuracyCircle = null, routeLayer = null;
+    let currentPos = null;
+    let panelCollapsed = true;
+    let watchId = null;
+    let routeBounds = null;
 
-    // Initialize map
-    map = L.map('map', {
+    // ── Map setup ────────────────────────────────────────────────────────────
+    const map = L.map('map', {
       zoomControl: false,
-      attributionControl: true
+      attributionControl: true,
     }).setView([DEST_LAT, DEST_LON], 17);
 
-    // Add OpenStreetMap tiles
+    // Use a tile layer that has better local coverage for Uganda
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap',
-      maxZoom: 19
+      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+      maxZoom: 19,
     }).addTo(map);
 
-    // Clear any existing map layers that might show wrong labels
-    map.eachLayer((layer) => {
-      if (layer instanceof L.TileLayer) {
-        // Keep only the main tile layer
-      } else {
-        // Remove any other layers that might be causing wrong labels
-        map.removeLayer(layer);
-      }
-    });
-
-    // Add destination marker with custom icon
+    // Destination marker
     const destIcon = L.divIcon({
-      html: '<i class="fas fa-map-pin" style="color: #ff4444; font-size: 30px; text-shadow: 0 0 5px white;"></i>',
-      className: 'custom-div-icon',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30]
+      html: `<div style="
+        width:36px;height:36px;
+        background:linear-gradient(135deg,#0d2b4e,#1a4a7a);
+        border:3px solid #f5c518;
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        box-shadow:0 4px 12px rgba(0,0,0,0.35);
+        display:flex;align-items:center;justify-content:center;
+      "><i class='fas fa-map-pin' style='color:#f5c518;transform:rotate(45deg);font-size:14px;'></i></div>`,
+      className: '',
+      iconSize: [36, 36],
+      iconAnchor: [18, 36],
     });
 
-    const destMarker = L.marker([DEST_LAT, DEST_LON], { icon: destIcon })
+    L.marker([DEST_LAT, DEST_LON], { icon: destIcon })
       .addTo(map)
-      .bindPopup(`<b>📍 ${DEST_NAME}</b>`);
+      .bindPopup(`<b>🎯 ${DEST_NAME}</b>`)
+      .openPopup();
 
-    // Check if location is within Kyambogo bounds
-    function isValidKyambogoLocation(lat, lon) {
-      const MIN_LAT = 0.34;
-      const MAX_LAT = 0.36;
-      const MIN_LON = 32.62;
-      const MAX_LON = 32.64;
-      
-      return lat >= MIN_LAT && lat <= MAX_LAT && lon >= MIN_LON && lon <= MAX_LON;
-    }
-
-    // Request location permission
-    function requestLocationPermission() {
-      document.getElementById('permissionOverlay').style.display = 'none';
-      
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            // Success
-            map.locate({ setView: false, enableHighAccuracy: true, watch: true });
-          },
-          (error) => {
-            // Error
-            console.error('Geolocation error:', error);
-            if (error.code === 1) {
-              document.getElementById('permissionOverlay').style.display = 'flex';
-            }
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      }
-    }
-
-    // Handle location found
-    function onLocationFound(e) {
-      const lat = e.latitude;
-      const lon = e.longitude;
-      const accuracy = e.accuracy;
-      
-      // Validate location is within Kyambogo
-      if (!isValidKyambogoLocation(lat, lon)) {
-        console.warn('Location outside Kyambogo:', lat, lon);
-        document.getElementById('status').innerHTML = '⚠️ Location outside campus';
+    // ── Geolocation ──────────────────────────────────────────────────────────
+    function startTracking() {
+      if (!navigator.geolocation) {
+        setStatus('⚠️ Geolocation not supported');
         return;
       }
-      
-      currentLocation = { lat, lon, accuracy };
-      
-      document.getElementById('accuracy').textContent = Math.round(accuracy);
-      document.getElementById('accuracy-badge').innerHTML = `<i class="fas fa-check"></i> ${Math.round(accuracy)}m`;
-      
-      // Update user marker
-      if (userMarker) {
-        userMarker.setLatLng([lat, lon]);
-        userAccuracyCircle.setLatLng([lat, lon]);
-        userAccuracyCircle.setRadius(accuracy);
-      } else {
-        // Accuracy circle
-        userAccuracyCircle = L.circle([lat, lon], {
-          radius: accuracy,
-          color: '#2196F3',
-          weight: 2,
-          opacity: 0.3,
-          fillColor: '#2196F3',
-          fillOpacity: 0.1
-        }).addTo(map);
-        
-        // User marker
-        userMarker = L.circleMarker([lat, lon], {
-          radius: 8,
-          fillColor: "#2196F3",
-          color: "#ffffff",
-          weight: 3,
-          opacity: 1,
-          fillOpacity: 0.9
-        }).addTo(map)
-          .bindPopup('<b>You are here</b>');
-      }
-
-      document.getElementById('status').innerHTML = `📍 Location acquired`;
-      
-      // Get route
-      getRoute(lat, lon);
-    }
-
-    function onLocationError(e) {
-      console.error('Location error:', e);
-      
-      if (e.code === 1) {
-        // Permission denied
-        document.getElementById('permissionOverlay').style.display = 'flex';
-        document.getElementById('status').innerHTML = '⚠️ Location access required';
-      } else {
-        document.getElementById('status').innerHTML = '⚠️ Could not get location';
-      }
-    }
-
-    // Start location tracking
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        () => {
-          // Permission granted
-          map.on('locationfound', onLocationFound);
-          map.on('locationerror', onLocationError);
-          map.locate({ setView: false, enableHighAccuracy: true, watch: true });
-        },
-        (error) => {
-          if (error.code === 1) {
-            document.getElementById('permissionOverlay').style.display = 'flex';
-          }
-        }
+      watchId = navigator.geolocation.watchPosition(
+        onPosition,
+        onGeoError,
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
       );
     }
 
-    function getRoute(userLat, userLon) {
-      document.getElementById('loading').style.display = 'flex';
-      
+    function onPosition(pos) {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const acc = Math.round(pos.coords.accuracy);
+
+      currentPos = { lat, lon, acc };
+
+      document.getElementById('accVal').textContent = acc;
+      document.getElementById('gpsBadge').innerHTML = `<i class="fas fa-check"></i> ${acc}m`;
+
+      // User dot
+      if (userMarker) {
+        userMarker.setLatLng([lat, lon]);
+        accuracyCircle.setLatLng([lat, lon]).setRadius(acc);
+      } else {
+        accuracyCircle = L.circle([lat, lon], {
+          radius: acc, color: '#2196F3', weight: 1,
+          fillColor: '#2196F3', fillOpacity: 0.1, opacity: 0.4
+        }).addTo(map);
+
+        userMarker = L.circleMarker([lat, lon], {
+          radius: 9, fillColor: '#2196F3', color: '#fff',
+          weight: 3, fillOpacity: 1, opacity: 1
+        }).addTo(map).bindPopup('<b>📍 You are here</b>');
+      }
+
+      setStatus('📍 Location found · calculating route…');
+      fetchRoute(lat, lon);
+    }
+
+    function onGeoError(err) {
+      if (err.code === 1) {   // PERMISSION_DENIED
+        document.getElementById('permOverlay').style.display = 'flex';
+        setStatus('⚠️ Location permission denied');
+      } else {
+        setStatus('⚠️ Cannot get location · retrying…');
+      }
+    }
+
+    function requestLocation() {
+      document.getElementById('permOverlay').style.display = 'none';
+      startTracking();
+    }
+
+    // ── Route fetch ──────────────────────────────────────────────────────────
+    let lastFetchTime = 0;
+
+    function fetchRoute(lat, lon) {
+      const now = Date.now();
+      if (now - lastFetchTime < 15000) return;  // debounce: refetch at most every 15s
+      lastFetchTime = now;
+
+      document.getElementById('loadingOverlay').style.display = 'flex';
+
       fetch('/api/route', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lat: userLat,
-          lon: userLon,
-          dest_lat: DEST_LAT,
-          dest_lon: DEST_LON
-        })
+        body: JSON.stringify({ lat, lon, dest_lat: DEST_LAT, dest_lon: DEST_LON }),
       })
       .then(r => r.json())
-      .then(data => {
-        document.getElementById('loading').style.display = 'none';
-        
-        if (data.success) {
-          // Remove existing route
-          if (routeLayer) map.removeLayer(routeLayer);
-          
-          // Add new route
-          routeLayer = L.polyline(data.path, {
-            color: '#2196F3',
-            weight: 6,
-            opacity: 0.8,
-            lineCap: 'round',
-            lineJoin: 'round'
-          }).addTo(map);
-          
-          // Update stats
-          document.getElementById('distance').textContent = data.distance_km;
-          document.getElementById('duration').textContent = data.duration_min;
-          document.getElementById('status').innerHTML = `✓ Route found • ${data.duration_min} min`;
-          
-          // Fit bounds
-          const bounds = routeLayer.getBounds();
-          if (bounds.isValid()) {
-            map.fitBounds(bounds, { padding: [50, 50] });
-          }
-          
-          // Add instructions
-          displayInstructions(data.instructions);
+      .then(d => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        if (d.success) {
+          displayRoute(d);
         } else {
-          document.getElementById('status').innerHTML = '❌ Could not find route';
-          // Draw straight line as fallback
-          drawDirectLine(userLat, userLon, DEST_LAT, DEST_LON);
+          setStatus('❌ Route error: ' + (d.error || 'unknown'));
         }
       })
-      .catch(err => {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('status').innerHTML = '⚠️ Connection error';
-        drawDirectLine(userLat, userLon, DEST_LAT, DEST_LON);
+      .catch(() => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        setStatus('⚠️ Network error – drawing straight line');
+        displayDirectLine(lat, lon);
       });
     }
 
-    function drawDirectLine(userLat, userLon, destLat, destLon) {
+    function displayRoute(data) {
       if (routeLayer) map.removeLayer(routeLayer);
-      
-      routeLayer = L.polyline([[userLat, userLon], [destLat, destLon]], {
-        color: '#ff9800',
-        weight: 4,
-        opacity: 0.8,
-        dashArray: '10, 10'
+
+      const isDirect = (data.source === 'direct');
+
+      routeLayer = L.polyline(data.path, {
+        color: isDirect ? '#ff9800' : '#2196F3',
+        weight: isDirect ? 4 : 6,
+        opacity: 0.85,
+        lineCap: 'round',
+        lineJoin: 'round',
+        dashArray: isDirect ? '10 8' : null,
       }).addTo(map);
-      
-      const distance = calculateDistance(userLat, userLon, destLat, destLon);
-      document.getElementById('distance').textContent = distance.toFixed(2);
-      document.getElementById('duration').textContent = Math.round(distance * 15);
-      
-      map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
+
+      routeBounds = routeLayer.getBounds();
+
+      document.getElementById('distVal').textContent = data.distance_km;
+      document.getElementById('durVal').textContent  = data.duration_min;
+
+      const corner = document.getElementById('routeTypeCorner');
+      if (isDirect) {
+        corner.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e65100;margin-right:5px"></i>Straight-line estimate';
+        corner.style.display = 'block';
+        setStatus(`⚠️ Straight line · ${data.distance_km} km · ${data.duration_min} min`);
+      } else {
+        corner.innerHTML = '<i class="fas fa-check" style="color:#388e3c;margin-right:5px"></i>Walking route';
+        corner.style.display = 'block';
+        setStatus(`✓ Route · ${data.distance_km} km · ${data.duration_min} min walk`);
+      }
+
+      // Auto-fit
+      fitRoute();
+
+      // Instructions
+      renderInstructions(data.instructions, isDirect);
+
+      // Expand panel
+      setTimeout(() => {
+        panelCollapsed = true;
+        togglePanel();
+      }, 600);
     }
 
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
+    function displayDirectLine(lat, lon) {
+      if (routeLayer) map.removeLayer(routeLayer);
+      const dist = haversine(lat, lon, DEST_LAT, DEST_LON);
+      routeLayer = L.polyline([[lat, lon], [DEST_LAT, DEST_LON]], {
+        color: '#ff9800', weight: 4, opacity: 0.8, dashArray: '10 8'
+      }).addTo(map);
+      routeBounds = routeLayer.getBounds();
+      document.getElementById('distVal').textContent = dist.toFixed(2);
+      document.getElementById('durVal').textContent  = Math.max(1, Math.round(dist * 15));
+      fitRoute();
     }
 
-    function displayInstructions(instructions) {
-      const container = document.getElementById('instructions');
-      container.innerHTML = '';
-      
+    function renderInstructions(instructions, isDirect) {
+      const wrap = document.getElementById('instrWrap');
+      wrap.innerHTML = '';
+
       if (!instructions || instructions.length === 0) {
-        container.innerHTML = `
-          <div class="instruction-item">
-            <div class="instruction-icon"><i class="fas fa-route"></i></div>
-            <div class="instruction-text">Follow the blue path</div>
-          </div>
-        `;
+        wrap.innerHTML = `<div class="instr-item">
+          <div class="instr-icon"><i class="fas fa-route"></i></div>
+          <div class="instr-text">Follow the route on the map</div></div>`;
         return;
       }
-      
-      instructions.slice(0, 3).forEach((inst, index) => {
-        const instruction = document.createElement('div');
-        instruction.className = 'instruction-item';
-        
+
+      instructions.forEach((step, i) => {
+        const txt = step.text || '';
         let icon = 'fa-arrow-right';
-        if (inst.text.toLowerCase().includes('left')) icon = 'fa-arrow-left';
-        if (inst.text.toLowerCase().includes('right')) icon = 'fa-arrow-right';
-        if (inst.text.toLowerCase().includes('straight')) icon = 'fa-arrow-up';
-        if (inst.text.toLowerCase().includes('arrive')) icon = 'fa-flag-checkered';
-        
-        instruction.innerHTML = `
-          <div class="instruction-icon"><i class="fas ${icon}"></i></div>
-          <div class="instruction-text">${inst.text}</div>
-          <div class="instruction-distance">${inst.distance}m</div>
-        `;
-        
-        container.appendChild(instruction);
+        if (/left/i.test(txt))   icon = 'fa-turn-left';
+        if (/right/i.test(txt))  icon = 'fa-turn-right';
+        if (/straight|continue/i.test(txt)) icon = 'fa-arrow-up';
+        if (/arrive|destination/i.test(txt)) icon = 'fa-flag-checkered';
+        if (/start|depart/i.test(txt)) icon = 'fa-play';
+
+        const distStr = step.distance > 0 ? `${step.distance}m` : '';
+        wrap.innerHTML += `
+          <div class="instr-item">
+            <div class="instr-icon"><i class="fas ${icon}"></i></div>
+            <div class="instr-text">${txt}</div>
+            <div class="instr-dist">${distStr}</div>
+          </div>`;
       });
     }
 
-    // Compass
-    if (window.DeviceOrientationEvent) {
-      window.addEventListener('deviceorientation', (event) => {
-        if (event.alpha !== null) {
-          currentHeading = event.alpha;
-          document.getElementById('compass').style.transform = `rotate(${-currentHeading}deg)`;
-        }
-      });
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371, toR = Math.PI / 180;
+      const dLat = (lat2 - lat1) * toR, dLon = (lon2 - lon1) * toR;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLon/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
-    document.getElementById('compass').addEventListener('click', () => {
-      map.setView(map.getCenter(), map.getZoom(), { animate: true });
-    });
+    function setStatus(msg) {
+      document.getElementById('statusText').textContent = msg;
+    }
 
-    // Control buttons
-    document.getElementById('locate-btn').addEventListener('click', () => {
-      if (currentLocation) {
-        map.setView([currentLocation.lat, currentLocation.lon], 18);
-        if (userMarker) userMarker.openPopup();
-      } else {
-        map.locate();
-      }
-    });
+    function centerOnUser() {
+      if (currentPos) map.setView([currentPos.lat, currentPos.lon], 18, { animate: true });
+    }
 
-    document.getElementById('zoom-in').addEventListener('click', () => {
-      map.setZoom(map.getZoom() + 1);
-    });
-
-    document.getElementById('zoom-out').addEventListener('click', () => {
-      map.setZoom(map.getZoom() - 1);
-    });
-
-    document.getElementById('speak-btn').addEventListener('click', () => {
-      const distance = document.getElementById('distance').textContent;
-      const duration = document.getElementById('duration').textContent;
-      
-      if ('speechSynthesis' in window) {
-        const text = `Route to ${DEST_NAME}. Distance ${distance} kilometers. Time ${duration} minutes.`;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-      }
-    });
-
-    // Route info panel
-    function toggleRouteInfo() {
-      const panel = document.getElementById('routeInfo');
-      const toggleBtn = document.getElementById('toggleBtn');
-      
-      routeInfoMinimized = !routeInfoMinimized;
-      
-      if (routeInfoMinimized) {
-        panel.style.transform = 'translateY(calc(100% - 60px))';
-        toggleBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
-      } else {
-        panel.style.transform = 'translateY(0)';
-        toggleBtn.innerHTML = '<i class="fas fa-chevron-up"></i>';
+    function fitRoute() {
+      if (routeBounds && routeBounds.isValid()) {
+        map.fitBounds(routeBounds, { padding: [60, 60], animate: true });
       }
     }
 
-    // Handle orientation change
-    window.addEventListener('orientationchange', () => {
-      setTimeout(() => map.invalidateSize(), 100);
-    });
+    function togglePanel() {
+      panelCollapsed = !panelCollapsed;
+      const panel = document.getElementById('routePanel');
+      panel.classList.toggle('collapsed', panelCollapsed);
+    }
 
-    window.addEventListener('resize', () => {
-      setTimeout(() => map.invalidateSize(), 100);
-    });
+    function speakRoute() {
+      if (!('speechSynthesis' in window)) return;
+      const dist = document.getElementById('distVal').textContent;
+      const dur  = document.getElementById('durVal').textContent;
+      const utt  = new SpeechSynthesisUtterance(
+        `Route to ${DEST_NAME}. Distance: ${dist} kilometres. Estimated time: ${dur} minutes.`
+      );
+      utt.rate = 0.9;
+      window.speechSynthesis.speak(utt);
+    }
 
-    setTimeout(() => map.invalidateSize(), 200);
+    // Handle resize / orientation change
+    window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 100));
+    window.addEventListener('orientationchange', () => setTimeout(() => map.invalidateSize(), 200));
+    setTimeout(() => map.invalidateSize(), 300);
+
+    // ── Start ─────────────────────────────────────────────────────────────────
+    startTracking();
   </script>
 </body>
 </html>
