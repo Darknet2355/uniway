@@ -1,15 +1,30 @@
-# Campus Navigation System (CNS)
+[README.txt](https://github.com/user-attachments/files/27563232/README.txt)
+KYAMBOGO CAMPUS NAVIGATOR - Setup Instructions
+==============================================
 
-A web-based platform for seamless campus navigation, built with **HTML**, **CSS**, **JavaScript**, and **Flask**. 
+1. Install dependencies:
+   pip install flask requests
 
-## Features
-- **Google Maps Embedding**: Navigate between campus locations with embedded maps.
-- **QR Code Access**: Scan and explore the site instantly.
-- **Facility Locator**: Quickly find campus facilities.
+2. Project structure:
+   your_project/
+   ├── app.py
+   ├── static/
+   │   └── logo.png
+   └── templates/
+       ├── index.html
+       ├── home.html
+       └── result.html
 
-## Technologies Used
-- **Frontend**: HTML, CSS, JavaScript
-- **Backend**: Flask
-- **Mapping**: Google Maps Embed
-- **Utilities**: QR code generation
+3. Run the app:
+   python app.py
 
+4. Open in browser:
+   http://localhost:5000
+
+ROUTING FIX NOTES:
+- The app now uses OSRM (Open Source Routing Machine) which has
+  better OpenStreetMap footpath data for Uganda than GraphHopper.
+- If OSRM is unreachable, a straight-line distance is shown as fallback.
+- The location validation that blocked users outside a tiny bounding box
+  has been removed — anyone on or near campus will now get routing.
+- Route is debounced (max once every 15 seconds) to avoid API spam.
