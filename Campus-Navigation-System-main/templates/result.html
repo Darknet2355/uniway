@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Route to {{ destination_name }} – KYU Navigator</title>
 
-  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- Icons & Fonts -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -19,26 +16,12 @@
       --navy-light: #1a4a7a;
       --gold: #f5c518;
       --blue: #2196F3;
-      --green: #4caf50;
-      --red: #f44336;
     }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; width:100%; overflow:hidden; font-family:'Outfit',sans-serif; }
+    body { display:flex; flex-direction:column; background:#eef1f5; }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html, body {
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      font-family: 'Outfit', sans-serif;
-    }
-
-    body {
-      display: flex;
-      flex-direction: column;
-      background: #eef1f5;
-    }
-
-    /* ── Header ── */
+    /* Header */
     .header {
       background: linear-gradient(135deg, var(--navy), var(--navy-light));
       color: white;
@@ -50,365 +33,180 @@
       box-shadow: 0 3px 15px rgba(0,0,0,0.25);
       flex-shrink: 0;
     }
-
     .back-btn {
-      width: 38px;
-      height: 38px;
-      background: rgba(255,255,255,0.18);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-size: 1rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: background 0.2s;
+      width:38px; height:38px;
+      background:rgba(255,255,255,0.18);
+      border:none; border-radius:10px;
+      color:white; font-size:1rem;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; transition:background 0.2s;
     }
-
-    .back-btn:hover { background: rgba(255,255,255,0.3); }
-
-    .header-info { flex: 1; min-width: 0; }
-
+    .back-btn:hover { background:rgba(255,255,255,0.3); }
+    .header-info { flex:1; min-width:0; }
     .header-info h3 {
-      font-size: 0.95rem;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 2px;
+      font-size:0.95rem; font-weight:700;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      margin-bottom:2px;
     }
-
     #statusText {
-      font-size: 0.72rem;
-      opacity: 0.85;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size:0.72rem; opacity:0.85;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
-
     .gps-badge {
-      background: var(--gold);
-      color: var(--navy);
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 0.68rem;
-      font-weight: 700;
-      white-space: nowrap;
-      flex-shrink: 0;
+      background:var(--gold); color:var(--navy);
+      padding:5px 10px; border-radius:20px;
+      font-size:0.68rem; font-weight:700;
+      white-space:nowrap; flex-shrink:0;
     }
 
-    /* ── Map ── */
-    .map-wrap {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-    }
+    /* Map */
+    .map-wrap { flex:1; position:relative; overflow:hidden; }
+    #map { width:100%; height:100%; }
 
-    #map {
-      width: 100%;
-      height: 100%;
+    /* Thin non-blocking loading bar — replaces full-screen spinner */
+    .loading-bar {
+      position:absolute; top:0; left:0; right:0;
+      height:3px;
+      background:rgba(245,197,24,0.2);
+      z-index:2000;
+      overflow:hidden;
+      display:none;
     }
+    .loading-bar::after {
+      content:'';
+      position:absolute; top:0; left:-45%; width:45%; height:100%;
+      background:var(--gold);
+      animation:barSlide 1.1s ease-in-out infinite;
+    }
+    @keyframes barSlide { 0%{left:-45%} 100%{left:110%} }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .spin { animation:spin 0.85s linear infinite; display:inline-block; }
 
-    /* ── Permission overlay ── */
+    /* Permission overlay */
     .perm-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(13,43,78,0.85);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 3000;
-      padding: 24px;
+      position:absolute; inset:0;
+      background:rgba(13,43,78,0.87);
+      backdrop-filter:blur(8px);
+      display:flex; align-items:center; justify-content:center;
+      z-index:3000; padding:24px;
     }
-
     .perm-card {
-      background: white;
-      border-radius: 22px;
-      padding: 32px 24px;
-      text-align: center;
-      max-width: 300px;
-      width: 100%;
+      background:white; border-radius:22px;
+      padding:32px 24px; text-align:center;
+      max-width:300px; width:100%;
     }
-
-    .perm-card .perm-icon {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, var(--navy), var(--navy-light));
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 16px;
+    .perm-icon {
+      width:64px; height:64px;
+      background:linear-gradient(135deg,var(--navy),var(--navy-light));
+      border-radius:18px;
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 16px;
     }
-
-    .perm-card .perm-icon i {
-      font-size: 1.8rem;
-      color: var(--gold);
-    }
-
-    .perm-card h4 {
-      color: var(--navy);
-      font-size: 1.1rem;
-      margin-bottom: 8px;
-    }
-
-    .perm-card p {
-      color: #666;
-      font-size: 0.85rem;
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
-
+    .perm-icon i { font-size:1.8rem; color:var(--gold); }
+    .perm-card h4 { color:var(--navy); font-size:1.1rem; margin-bottom:8px; }
+    .perm-card p  { color:#666; font-size:0.85rem; margin-bottom:20px; line-height:1.5; }
     .perm-btn {
-      background: var(--gold);
-      border: none;
-      padding: 13px 24px;
-      border-radius: 12px;
-      color: var(--navy);
-      font-family: 'Outfit', sans-serif;
-      font-weight: 700;
-      font-size: 0.95rem;
-      width: 100%;
-      cursor: pointer;
-      transition: opacity 0.2s;
+      background:var(--gold); border:none;
+      padding:13px 24px; border-radius:12px;
+      color:var(--navy); font-family:'Outfit',sans-serif;
+      font-weight:700; font-size:0.95rem;
+      width:100%; cursor:pointer;
     }
 
-    .perm-btn:hover { opacity: 0.9; }
-
-    /* ── Loading spinner ── */
-    .loading-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,0.85);
-      backdrop-filter: blur(4px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 2500;
-      gap: 14px;
+    /* Route type corner tag */
+    .route-tag {
+      position:absolute; top:12px; left:12px;
+      background:white; border-radius:10px;
+      padding:6px 12px; font-size:0.72rem; font-weight:600;
+      color:var(--navy);
+      box-shadow:0 3px 10px rgba(0,0,0,0.15);
+      z-index:1000; display:none;
     }
 
-    .spinner {
-      width: 44px;
-      height: 44px;
-      border: 4px solid #e0e0e0;
-      border-top-color: var(--navy);
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .loading-overlay p {
-      color: var(--navy);
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    /* ── Map controls ── */
+    /* Map controls */
     .map-controls {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 1000;
+      position:absolute; right:12px; top:50%;
+      transform:translateY(-50%);
+      display:flex; flex-direction:column; gap:8px;
+      z-index:1000;
     }
-
     .map-btn {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-      background: white;
-      border: none;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.18);
-      color: var(--navy);
-      font-size: 1rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
+      width:42px; height:42px; border-radius:12px;
+      background:white; border:none;
+      box-shadow:0 3px 12px rgba(0,0,0,0.18);
+      color:var(--navy); font-size:1rem;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:all 0.2s;
     }
+    .map-btn:hover { background:var(--navy); color:var(--gold); }
 
-    .map-btn:hover { background: var(--navy); color: var(--gold); }
-    .map-btn.active { background: var(--navy); color: var(--gold); }
-
-    /* ── Bottom route panel ── */
+    /* Bottom route panel */
     .route-panel {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: white;
-      border-radius: 22px 22px 0 0;
-      box-shadow: 0 -6px 30px rgba(0,0,0,0.18);
-      z-index: 1000;
-      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      max-height: 55vh;
-      display: flex;
-      flex-direction: column;
+      position:absolute; bottom:0; left:0; right:0;
+      background:white;
+      border-radius:22px 22px 0 0;
+      box-shadow:0 -6px 30px rgba(0,0,0,0.18);
+      z-index:1000;
+      transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      max-height:55vh;
+      display:flex; flex-direction:column;
     }
+    .route-panel.collapsed { transform:translateY(calc(100% - 70px)); }
 
-    .route-panel.collapsed {
-      transform: translateY(calc(100% - 70px));
-    }
-
-    .panel-handle {
-      text-align: center;
-      padding: 10px;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .handle-bar {
-      width: 40px;
-      height: 4px;
-      background: #e0e0e0;
-      border-radius: 2px;
-      display: inline-block;
-    }
+    .panel-handle { text-align:center; padding:10px; cursor:pointer; flex-shrink:0; }
+    .handle-bar { width:40px; height:4px; background:#e0e0e0; border-radius:2px; display:inline-block; }
 
     .panel-stats {
-      display: flex;
-      align-items: center;
-      padding: 0 20px 14px;
-      gap: 20px;
-      flex-shrink: 0;
-      cursor: pointer;
+      display:flex; align-items:center;
+      padding:0 20px 14px; gap:20px;
+      flex-shrink:0; cursor:pointer;
     }
+    .stat-item { text-align:center; }
+    .stat-val { font-size:1.5rem; font-weight:700; color:var(--navy); line-height:1; }
+    .stat-lbl { font-size:0.62rem; color:#999; text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
+    .stat-div  { width:1px; height:36px; background:#eee; }
 
-    .stat-item {
-      text-align: center;
+    .panel-btns { display:flex; flex-direction:column; gap:6px; margin-left:auto; }
+    .icon-btn {
+      width:42px; height:42px;
+      border:none; border-radius:11px;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1rem; transition:opacity 0.2s;
     }
+    .icon-btn:hover { opacity:0.85; }
+    .icon-btn.primary   { background:var(--navy); color:var(--gold); }
+    .icon-btn.secondary { background:#f0f3f8; color:var(--navy); }
 
-    .stat-val {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--navy);
-      line-height: 1;
+    /* Instructions */
+    .instr-list {
+      overflow-y:auto; flex:1;
+      padding:0 16px 20px;
+      border-top:1px solid #f0f0f0;
     }
-
-    .stat-lbl {
-      font-size: 0.62rem;
-      color: #999;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-top: 2px;
-    }
-
-    .stat-divider {
-      width: 1px;
-      height: 36px;
-      background: #eee;
-    }
-
-    .speak-btn {
-      margin-left: auto;
-      width: 42px;
-      height: 42px;
-      background: var(--navy);
-      border: none;
-      border-radius: 11px;
-      color: var(--gold);
-      font-size: 1rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    /* Source badge */
-    .source-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.68rem;
-      font-weight: 600;
-      margin-left: 8px;
-    }
-
-    .source-tag.osrm { background: rgba(76,175,80,0.12); color: #388e3c; }
-    .source-tag.direct { background: rgba(255,152,0,0.12); color: #e65100; }
-
-    /* ── Instructions list ── */
-    .instructions-wrap {
-      overflow-y: auto;
-      flex: 1;
-      padding: 0 16px 20px;
-      border-top: 1px solid #f0f0f0;
-    }
-
     .instr-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid #f5f5f5;
+      display:flex; align-items:center; gap:12px;
+      padding:10px 0; border-bottom:1px solid #f5f5f5;
     }
-
     .instr-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #f0f3f8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--navy);
-      font-size: 0.85rem;
-      flex-shrink: 0;
+      width:32px; height:32px; border-radius:50%;
+      background:#f0f3f8;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--navy); font-size:0.85rem; flex-shrink:0;
     }
+    .instr-text { flex:1; font-size:0.85rem; color:#333; line-height:1.35; }
+    .instr-dist { font-size:0.72rem; color:#999; font-weight:600; flex-shrink:0; }
 
-    .instr-text {
-      flex: 1;
-      font-size: 0.85rem;
-      color: #333;
-      line-height: 1.35;
-    }
-
-    .instr-dist {
-      font-size: 0.72rem;
-      color: #999;
-      white-space: nowrap;
-      font-weight: 600;
-      flex-shrink: 0;
-    }
-
-    /* Route type tag in corner */
-    .route-type-corner {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      background: white;
-      border-radius: 10px;
-      padding: 6px 12px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: var(--navy);
-      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-      z-index: 1000;
-      display: none;
-    }
-
-    @media (max-width: 380px) {
-      .stat-val { font-size: 1.25rem; }
-      .map-btn { width: 38px; height: 38px; }
+    @media (max-width:380px) {
+      .stat-val { font-size:1.25rem; }
+      .map-btn  { width:38px; height:38px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
   <div class="header">
     <button class="back-btn" onclick="history.back()">
       <i class="fas fa-arrow-left"></i>
@@ -420,48 +218,44 @@
     <div class="gps-badge" id="gpsBadge"><i class="fas fa-satellite"></i> GPS</div>
   </div>
 
-  <!-- Map area -->
   <div class="map-wrap">
     <div id="map"></div>
 
-    <!-- Route type label -->
-    <div class="route-type-corner" id="routeTypeCorner"></div>
+    <!-- Non-blocking thin bar — no fullscreen overlay -->
+    <div class="loading-bar" id="loadingBar"></div>
 
-    <!-- Location permission prompt -->
+    <!-- Route type tag -->
+    <div class="route-tag" id="routeTag"></div>
+
+    <!-- Permission prompt -->
     <div class="perm-overlay" id="permOverlay" style="display:none">
       <div class="perm-card">
         <div class="perm-icon"><i class="fas fa-location-dot"></i></div>
         <h4>Enable Location</h4>
-        <p>Location access is needed so we can calculate the best walking route to your destination.</p>
+        <p>Location access is needed so we can calculate your walking route to the destination.</p>
         <button class="perm-btn" onclick="requestLocation()">
           <i class="fas fa-location-arrow"></i> Allow Location Access
         </button>
       </div>
     </div>
 
-    <!-- Loading -->
-    <div class="loading-overlay" id="loadingOverlay" style="display:none">
-      <div class="spinner"></div>
-      <p>Finding best route…</p>
-    </div>
-
-    <!-- Map controls -->
+    <!-- Map control buttons -->
     <div class="map-controls">
-      <button class="map-btn" id="locateBtn" title="Center on me" onclick="centerOnUser()">
+      <button class="map-btn" title="My location" onclick="centerOnUser()">
         <i class="fas fa-location-arrow"></i>
       </button>
-      <button class="map-btn" onclick="map.setZoom(map.getZoom()+1)" title="Zoom in">
+      <button class="map-btn" title="Zoom in"  onclick="map.setZoom(map.getZoom()+1)">
         <i class="fas fa-plus"></i>
       </button>
-      <button class="map-btn" onclick="map.setZoom(map.getZoom()-1)" title="Zoom out">
+      <button class="map-btn" title="Zoom out" onclick="map.setZoom(map.getZoom()-1)">
         <i class="fas fa-minus"></i>
       </button>
-      <button class="map-btn" id="fitBtn" title="Fit route" onclick="fitRoute()">
+      <button class="map-btn" title="Fit route" onclick="fitRoute()">
         <i class="fas fa-expand"></i>
       </button>
     </div>
 
-    <!-- Route info panel -->
+    <!-- Bottom route panel -->
     <div class="route-panel collapsed" id="routePanel">
       <div class="panel-handle" onclick="togglePanel()">
         <span class="handle-bar"></span>
@@ -472,87 +266,87 @@
           <div class="stat-val" id="distVal">—</div>
           <div class="stat-lbl">KM</div>
         </div>
-        <div class="stat-divider"></div>
+        <div class="stat-div"></div>
         <div class="stat-item">
           <div class="stat-val" id="durVal">—</div>
           <div class="stat-lbl">MIN</div>
         </div>
-        <div class="stat-divider"></div>
+        <div class="stat-div"></div>
         <div class="stat-item">
           <div class="stat-val" id="accVal">—</div>
           <div class="stat-lbl">±M</div>
         </div>
-        <button class="speak-btn" onclick="event.stopPropagation(); speakRoute()">
-          <i class="fas fa-volume-up"></i>
-        </button>
+        <div class="panel-btns">
+          <button class="icon-btn primary"   onclick="event.stopPropagation(); speakRoute()"  title="Speak route">
+            <i class="fas fa-volume-up"></i>
+          </button>
+          <button class="icon-btn secondary" onclick="event.stopPropagation(); recalcRoute()" title="Recalculate">
+            <i class="fas fa-rotate-right"></i>
+          </button>
+        </div>
       </div>
 
-      <div class="instructions-wrap" id="instrWrap">
+      <div class="instr-list" id="instrList">
         <div class="instr-item">
           <div class="instr-icon"><i class="fas fa-circle-info"></i></div>
-          <div class="instr-text">Waiting for route…</div>
+          <div class="instr-text">Waiting for your location…</div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // ── Constants from Flask ──────────────────────────────────────────────────
     const DEST_LAT  = {{ dest_lat }};
     const DEST_LON  = {{ dest_lon }};
     const DEST_NAME = "{{ destination_name }}";
 
     // ── State ─────────────────────────────────────────────────────────────────
-    let userMarker = null, accuracyCircle = null, routeLayer = null;
-    let currentPos = null;
+    let userMarker     = null;
+    let accuracyCircle = null;
+    let routeLayer     = null;
+    let currentPos     = null;
+    let routeBounds    = null;
     let panelCollapsed = true;
-    let watchId = null;
-    let routeBounds = null;
 
-    // ── Map setup ────────────────────────────────────────────────────────────
-    const map = L.map('map', {
-      zoomControl: false,
-      attributionControl: true,
-    }).setView([DEST_LAT, DEST_LON], 17);
+    // These three flags are the core fix:
+    // routeFetched  → true after the first successful route draw; prevents re-fetching on every GPS update
+    // routeFetching → true while a fetch is in progress; prevents duplicate parallel requests
+    // mapFitted     → true after the first fitBounds; the map never auto-zooms again (user controls it)
+    let routeFetched  = false;
+    let routeFetching = false;
+    let mapFitted     = false;
 
-    // Use a tile layer that has better local coverage for Uganda
+    // ── Map init ──────────────────────────────────────────────────────────────
+    const map = L.map('map', { zoomControl:false, attributionControl:true })
+                 .setView([DEST_LAT, DEST_LON], 17);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
       maxZoom: 19,
     }).addTo(map);
 
-    // Destination marker
+    // Destination pin
     const destIcon = L.divIcon({
       html: `<div style="
         width:36px;height:36px;
         background:linear-gradient(135deg,#0d2b4e,#1a4a7a);
-        border:3px solid #f5c518;
-        border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);
-        box-shadow:0 4px 12px rgba(0,0,0,0.35);
-        display:flex;align-items:center;justify-content:center;
-      "><i class='fas fa-map-pin' style='color:#f5c518;transform:rotate(45deg);font-size:14px;'></i></div>`,
-      className: '',
-      iconSize: [36, 36],
-      iconAnchor: [18, 36],
+        border:3px solid #f5c518;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);box-shadow:0 4px 12px rgba(0,0,0,0.35);
+        display:flex;align-items:center;justify-content:center;">
+        <i class='fas fa-map-pin' style='color:#f5c518;transform:rotate(45deg);font-size:14px;'></i>
+      </div>`,
+      className:'', iconSize:[36,36], iconAnchor:[18,36],
     });
-
-    L.marker([DEST_LAT, DEST_LON], { icon: destIcon })
+    L.marker([DEST_LAT, DEST_LON], { icon:destIcon })
       .addTo(map)
       .bindPopup(`<b>🎯 ${DEST_NAME}</b>`)
       .openPopup();
 
-    // ── Geolocation ──────────────────────────────────────────────────────────
+    // ── Geolocation ───────────────────────────────────────────────────────────
     function startTracking() {
-      if (!navigator.geolocation) {
-        setStatus('⚠️ Geolocation not supported');
-        return;
-      }
-      watchId = navigator.geolocation.watchPosition(
-        onPosition,
-        onGeoError,
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
-      );
+      if (!navigator.geolocation) { setStatus('⚠️ Geolocation not supported'); return; }
+      navigator.geolocation.watchPosition(onPosition, onGeoError,
+        { enableHighAccuracy:true, timeout:15000, maximumAge:5000 });
     }
 
     function onPosition(pos) {
@@ -562,31 +356,35 @@
 
       currentPos = { lat, lon, acc };
 
+      // Always update the accuracy value in the panel
       document.getElementById('accVal').textContent = acc;
-      document.getElementById('gpsBadge').innerHTML = `<i class="fas fa-check"></i> ${acc}m`;
 
-      // User dot
+      // ── Move the blue dot silently — no loading, no map reset ─────────────
       if (userMarker) {
         userMarker.setLatLng([lat, lon]);
         accuracyCircle.setLatLng([lat, lon]).setRadius(acc);
       } else {
+        // Very first fix: draw the dot and the accuracy ring
         accuracyCircle = L.circle([lat, lon], {
-          radius: acc, color: '#2196F3', weight: 1,
-          fillColor: '#2196F3', fillOpacity: 0.1, opacity: 0.4
+          radius:acc, color:'#2196F3', weight:1,
+          fillColor:'#2196F3', fillOpacity:0.1, opacity:0.4,
         }).addTo(map);
-
         userMarker = L.circleMarker([lat, lon], {
-          radius: 9, fillColor: '#2196F3', color: '#fff',
-          weight: 3, fillOpacity: 1, opacity: 1
+          radius:9, fillColor:'#2196F3', color:'#fff',
+          weight:3, fillOpacity:1, opacity:1,
         }).addTo(map).bindPopup('<b>📍 You are here</b>');
       }
 
-      setStatus('📍 Location found · calculating route…');
-      fetchRoute(lat, lon);
+      // ── Fetch the route ONLY on the very first position fix ────────────────
+      // After that, every GPS update just moves the dot — no reload, no flicker
+      if (!routeFetched && !routeFetching) {
+        setStatus('📍 Got location · calculating route…');
+        fetchRoute(lat, lon);
+      }
     }
 
     function onGeoError(err) {
-      if (err.code === 1) {   // PERMISSION_DENIED
+      if (err.code === 1) {
         document.getElementById('permOverlay').style.display = 'flex';
         setStatus('⚠️ Location permission denied');
       } else {
@@ -599,48 +397,61 @@
       startTracking();
     }
 
-    // ── Route fetch ──────────────────────────────────────────────────────────
-    let lastFetchTime = 0;
-
+    // ── Route fetch ───────────────────────────────────────────────────────────
     function fetchRoute(lat, lon) {
-      const now = Date.now();
-      if (now - lastFetchTime < 15000) return;  // debounce: refetch at most every 15s
-      lastFetchTime = now;
+      if (routeFetching) return;
+      routeFetching = true;
 
-      document.getElementById('loadingOverlay').style.display = 'flex';
+      // Show the thin bar at the top of the map — map stays fully visible & interactive
+      document.getElementById('loadingBar').style.display = 'block';
+      document.getElementById('gpsBadge').innerHTML = '<i class="fas fa-circle-notch spin"></i> routing…';
 
       fetch('/api/route', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lon, dest_lat: DEST_LAT, dest_lon: DEST_LON }),
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ lat, lon, dest_lat:DEST_LAT, dest_lon:DEST_LON }),
       })
       .then(r => r.json())
-      .then(d => {
-        document.getElementById('loadingOverlay').style.display = 'none';
-        if (d.success) {
-          displayRoute(d);
+      .then(data => {
+        document.getElementById('loadingBar').style.display = 'none';
+        routeFetching = false;
+        routeFetched  = true;   // ← lock: no more auto-fetches on GPS updates
+        if (data.success) {
+          displayRoute(data);
         } else {
-          setStatus('❌ Route error: ' + (d.error || 'unknown'));
+          setStatus('❌ Route error · ' + (data.error || 'unknown'));
+          setBadge('⚠️ Error', false);
         }
       })
       .catch(() => {
-        document.getElementById('loadingOverlay').style.display = 'none';
-        setStatus('⚠️ Network error – drawing straight line');
-        displayDirectLine(lat, lon);
+        document.getElementById('loadingBar').style.display = 'none';
+        routeFetching = false;
+        routeFetched  = true;   // still lock so dot moves freely
+        setStatus('⚠️ No network · showing straight line');
+        if (currentPos) displayDirectLine(currentPos.lat, currentPos.lon);
       });
     }
 
+    // Called only by the ↺ recalculate button — user's explicit choice
+    function recalcRoute() {
+      if (!currentPos) { setStatus('⚠️ No location yet'); return; }
+      routeFetched  = false;
+      routeFetching = false;
+      mapFitted     = false;
+      fetchRoute(currentPos.lat, currentPos.lon);
+    }
+
+    // ── Display route ─────────────────────────────────────────────────────────
     function displayRoute(data) {
       if (routeLayer) map.removeLayer(routeLayer);
 
       const isDirect = (data.source === 'direct');
 
       routeLayer = L.polyline(data.path, {
-        color: isDirect ? '#ff9800' : '#2196F3',
-        weight: isDirect ? 4 : 6,
-        opacity: 0.85,
-        lineCap: 'round',
-        lineJoin: 'round',
+        color:     isDirect ? '#ff9800' : '#2196F3',
+        weight:    isDirect ? 4 : 6,
+        opacity:   0.85,
+        lineCap:   'round', lineJoin:'round',
         dashArray: isDirect ? '10 8' : null,
       }).addTo(map);
 
@@ -649,117 +460,112 @@
       document.getElementById('distVal').textContent = data.distance_km;
       document.getElementById('durVal').textContent  = data.duration_min;
 
-      const corner = document.getElementById('routeTypeCorner');
+      const tag = document.getElementById('routeTag');
       if (isDirect) {
-        corner.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e65100;margin-right:5px"></i>Straight-line estimate';
-        corner.style.display = 'block';
+        tag.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e65100;margin-right:5px"></i>Straight-line estimate';
         setStatus(`⚠️ Straight line · ${data.distance_km} km · ${data.duration_min} min`);
+        setBadge('⚠️ Estimate', false);
       } else {
-        corner.innerHTML = '<i class="fas fa-check" style="color:#388e3c;margin-right:5px"></i>Walking route';
-        corner.style.display = 'block';
-        setStatus(`✓ Route · ${data.distance_km} km · ${data.duration_min} min walk`);
+        tag.innerHTML = '<i class="fas fa-check" style="color:#388e3c;margin-right:5px"></i>Walking route';
+        setStatus(`✓ ${data.distance_km} km · ${data.duration_min} min walk`);
+        setBadge(`<i class="fas fa-check"></i> ${currentPos ? currentPos.acc : '—'}m`, true);
+      }
+      tag.style.display = 'block';
+
+      // fitBounds runs exactly once automatically; after that, only the ⤢ button does it
+      if (!mapFitted && routeBounds.isValid()) {
+        mapFitted = true;
+        map.fitBounds(routeBounds, { padding:[60, 80], animate:true });
       }
 
-      // Auto-fit
-      fitRoute();
+      renderInstructions(data.instructions);
 
-      // Instructions
-      renderInstructions(data.instructions, isDirect);
-
-      // Expand panel
-      setTimeout(() => {
-        panelCollapsed = true;
-        togglePanel();
-      }, 600);
+      // Slide panel up once
+      setTimeout(() => { if (panelCollapsed) togglePanel(); }, 700);
     }
 
     function displayDirectLine(lat, lon) {
       if (routeLayer) map.removeLayer(routeLayer);
       const dist = haversine(lat, lon, DEST_LAT, DEST_LON);
-      routeLayer = L.polyline([[lat, lon], [DEST_LAT, DEST_LON]], {
-        color: '#ff9800', weight: 4, opacity: 0.8, dashArray: '10 8'
+      routeLayer = L.polyline([[lat,lon],[DEST_LAT,DEST_LON]], {
+        color:'#ff9800', weight:4, opacity:0.8, dashArray:'10 8',
       }).addTo(map);
       routeBounds = routeLayer.getBounds();
       document.getElementById('distVal').textContent = dist.toFixed(2);
       document.getElementById('durVal').textContent  = Math.max(1, Math.round(dist * 15));
-      fitRoute();
+      if (!mapFitted && routeBounds.isValid()) {
+        mapFitted = true;
+        map.fitBounds(routeBounds, { padding:[60,80] });
+      }
     }
 
-    function renderInstructions(instructions, isDirect) {
-      const wrap = document.getElementById('instrWrap');
-      wrap.innerHTML = '';
+    function renderInstructions(steps) {
+      const list = document.getElementById('instrList');
+      list.innerHTML = '';
 
-      if (!instructions || instructions.length === 0) {
-        wrap.innerHTML = `<div class="instr-item">
+      if (!steps || steps.length === 0) {
+        list.innerHTML = `<div class="instr-item">
           <div class="instr-icon"><i class="fas fa-route"></i></div>
-          <div class="instr-text">Follow the route on the map</div></div>`;
+          <div class="instr-text">Follow the blue path on the map</div></div>`;
         return;
       }
 
-      instructions.forEach((step, i) => {
-        const txt = step.text || '';
+      steps.forEach(step => {
+        const t = step.text || '';
         let icon = 'fa-arrow-right';
-        if (/left/i.test(txt))   icon = 'fa-turn-left';
-        if (/right/i.test(txt))  icon = 'fa-turn-right';
-        if (/straight|continue/i.test(txt)) icon = 'fa-arrow-up';
-        if (/arrive|destination/i.test(txt)) icon = 'fa-flag-checkered';
-        if (/start|depart/i.test(txt)) icon = 'fa-play';
-
-        const distStr = step.distance > 0 ? `${step.distance}m` : '';
-        wrap.innerHTML += `
+        if (/left/i.test(t))               icon = 'fa-turn-left';
+        if (/right/i.test(t))              icon = 'fa-turn-right';
+        if (/straight|continue/i.test(t))  icon = 'fa-arrow-up';
+        if (/arrive|destination/i.test(t)) icon = 'fa-flag-checkered';
+        if (/start|depart/i.test(t))       icon = 'fa-play';
+        const d = step.distance > 0 ? `${step.distance}m` : '';
+        list.innerHTML += `
           <div class="instr-item">
             <div class="instr-icon"><i class="fas ${icon}"></i></div>
-            <div class="instr-text">${txt}</div>
-            <div class="instr-dist">${distStr}</div>
+            <div class="instr-text">${t}</div>
+            <div class="instr-dist">${d}</div>
           </div>`;
       });
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-    function haversine(lat1, lon1, lat2, lon2) {
-      const R = 6371, toR = Math.PI / 180;
-      const dLat = (lat2 - lat1) * toR, dLon = (lon2 - lon1) * toR;
-      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLon/2)**2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    function haversine(lat1,lon1,lat2,lon2) {
+      const R=6371, r=Math.PI/180;
+      const dL=(lat2-lat1)*r, dO=(lon2-lon1)*r;
+      const a=Math.sin(dL/2)**2+Math.cos(lat1*r)*Math.cos(lat2*r)*Math.sin(dO/2)**2;
+      return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
     }
-
-    function setStatus(msg) {
-      document.getElementById('statusText').textContent = msg;
+    function setStatus(msg) { document.getElementById('statusText').textContent = msg; }
+    function setBadge(html, ok) {
+      const b = document.getElementById('gpsBadge');
+      b.style.background = ok ? 'var(--gold)' : '#ff9800';
+      b.innerHTML = html;
     }
-
     function centerOnUser() {
-      if (currentPos) map.setView([currentPos.lat, currentPos.lon], 18, { animate: true });
+      if (currentPos) map.setView([currentPos.lat,currentPos.lon],18,{animate:true});
     }
-
     function fitRoute() {
-      if (routeBounds && routeBounds.isValid()) {
-        map.fitBounds(routeBounds, { padding: [60, 60], animate: true });
-      }
+      if (routeBounds && routeBounds.isValid())
+        map.fitBounds(routeBounds,{padding:[60,80],animate:true});
     }
-
     function togglePanel() {
       panelCollapsed = !panelCollapsed;
-      const panel = document.getElementById('routePanel');
-      panel.classList.toggle('collapsed', panelCollapsed);
+      document.getElementById('routePanel').classList.toggle('collapsed', panelCollapsed);
     }
-
     function speakRoute() {
       if (!('speechSynthesis' in window)) return;
       const dist = document.getElementById('distVal').textContent;
       const dur  = document.getElementById('durVal').textContent;
-      const utt  = new SpeechSynthesisUtterance(
-        `Route to ${DEST_NAME}. Distance: ${dist} kilometres. Estimated time: ${dur} minutes.`
-      );
-      utt.rate = 0.9;
-      window.speechSynthesis.speak(utt);
+      const u = new SpeechSynthesisUtterance(
+        `Route to ${DEST_NAME}. Distance: ${dist} kilometres. Estimated walking time: ${dur} minutes.`);
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
     }
 
-    // Handle resize / orientation change
-    window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 100));
-    window.addEventListener('orientationchange', () => setTimeout(() => map.invalidateSize(), 200));
-    setTimeout(() => map.invalidateSize(), 300);
+    window.addEventListener('resize',          () => setTimeout(()=>map.invalidateSize(),100));
+    window.addEventListener('orientationchange',() => setTimeout(()=>map.invalidateSize(),200));
+    setTimeout(()=>map.invalidateSize(),300);
 
-    // ── Start ─────────────────────────────────────────────────────────────────
     startTracking();
   </script>
 </body>
