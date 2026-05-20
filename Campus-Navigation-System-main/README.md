@@ -1,4 +1,4 @@
-[README.txt](https://github.com/user-attachments/files/27563232/README.txt)
+(https://github.com/user-attachments/files/28072604/README.txt)
 KYAMBOGO CAMPUS NAVIGATOR - Setup Instructions
 ==============================================
 
