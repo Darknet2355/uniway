@@ -20,6 +20,9 @@ KYAMBOGO CAMPUS NAVIGATOR - Setup Instructions
 4. Open in browser:
    http://localhost:5000
 
+ **  alternatively**
+   https://uniway-2.onrender.com/
+
 ROUTING FIX NOTES:
 - The app now uses OSRM (Open Source Routing Machine) which has
   better OpenStreetMap footpath data for Uganda than GraphHopper.
