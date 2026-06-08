@@ -167,6 +167,14 @@ def haversine(lat1, lon1, lat2, lon2):
 def index():
     return render_template("index.html")
 
+@app.route('/assistant')
+def assistant():
+    return render_template('assistant.html')
+
+@app.route('/firstday')
+def firstday():
+    return render_template('firstday.html')
+
 
 @app.route("/home")
 def home():
