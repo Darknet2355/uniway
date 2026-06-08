@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>AI Assistant – Kyambogo Navigator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --navy:  #0d2b4e;
+      --navy2: #1a4a7a;
+      --gold:  #ffd700;
+      --bg:    #f0f3f8;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    body { display:flex; flex-direction:column; }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, var(--navy), var(--navy2));
+      padding: 13px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      box-shadow: 0 3px 16px rgba(0,0,0,0.28);
+      z-index: 10;
+    }
+
+    .back-btn {
+      width: 38px; height: 38px;
+      background: rgba(255,255,255,0.15);
+      border: none; border-radius: 10px;
+      color: white; font-size: 1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.28); }
+
+    .ai-avatar {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--gold), #e6b800);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      box-shadow: 0 3px 10px rgba(255,215,0,0.4);
+      position: relative;
+    }
+
+    .online-dot {
+      position: absolute;
+      bottom: 2px; right: 2px;
+      width: 9px; height: 9px;
+      background: #4caf50;
+      border-radius: 50%;
+      border: 2px solid var(--navy);
+    }
+
+    .header-text { flex:1; min-width:0; }
+    .header-text h3 {
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin: 0 0 1px;
+    }
+    .header-text p {
+      color: var(--gold);
+      font-size: 0.68rem;
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    .clear-btn {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.12);
+      border: none; border-radius: 9px;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all .2s;
+    }
+    .clear-btn:hover { background: rgba(255,255,255,0.22); color: white; }
+
+    /* ── Suggestion chips ── */
+    .chips-wrap {
+      background: white;
+      padding: 10px 14px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: none;
+      border-bottom: 1px solid #e8edf3;
+    }
+    .chips-wrap::-webkit-scrollbar { display:none; }
+
+    .chip {
+      background: #f0f3f8;
+      border: 1.5px solid #dce3ee;
+      border-radius: 20px;
+      padding: 6px 13px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--navy);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+    .chip:hover {
+      background: var(--navy);
+      color: var(--gold);
+      border-color: var(--gold);
+    }
+    .chip i { margin-right: 5px; }
+
+    /* ── Chat messages ── */
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+    }
+
+    /* Date separator */
+    .day-sep {
+      text-align: center;
+      font-size: 0.68rem;
+      color: #aaa;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .day-sep::before, .day-sep::after {
+      content:''; flex:1; height:1px; background:#e0e5ee;
+    }
+
+    /* Message rows */
+    .msg-row {
+      display: flex;
+      gap: 9px;
+      align-items: flex-end;
+      animation: msgIn .25s ease both;
+    }
+    @keyframes msgIn {
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .msg-row.user { flex-direction: row-reverse; }
+
+    .msg-avatar {
+      width: 30px; height: 30px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+    .msg-avatar.ai   { background: linear-gradient(135deg,var(--navy),var(--navy2)); color:var(--gold); }
+    .msg-avatar.user { background: var(--gold); color: var(--navy); font-weight:700; }
+
+    .bubble {
+      max-width: 78%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      position: relative;
+      word-wrap: break-word;
+    }
+
+    .bubble.ai {
+      background: white;
+      color: #222;
+      border-radius: 18px 18px 18px 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .bubble.user {
+      background: linear-gradient(135deg, var(--navy), var(--navy2));
+      color: white;
+      border-radius: 18px 18px 4px 18px;
+    }
+
+    .bubble-time {
+      font-size: 0.62rem;
+      color: #bbb;
+      margin-top: 4px;
+      text-align: right;
+    }
+    .bubble.user + .bubble-time { color: rgba(255,255,255,0.55); }
+
+    /* Navigate button inside AI bubble */
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 7px 14px;
+      background: var(--navy);
+      color: var(--gold);
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: opacity .2s;
+    }
+    .nav-link:hover { opacity: .85; color: var(--gold); }
+
+    /* Typing indicator */
+    .typing-row { display:flex; gap:9px; align-items:flex-end; }
+    .typing-bubble {
+      background: white;
+      border-radius: 18px 18px 18px 4px;
+      padding: 12px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .typing-bubble span {
+      width: 7px; height: 7px;
+      background: #bbb;
+      border-radius: 50%;
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .typing-bubble span:nth-child(2) { animation-delay:.2s; }
+    .typing-bubble span:nth-child(3) { animation-delay:.4s; }
+    @keyframes bounce {
+      0%,60%,100% { transform:translateY(0); }
+      30%          { transform:translateY(-6px); background:#888; }
+    }
+
+    /* ── Input bar ── */
+    .input-bar {
+      background: white;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-top: 1px solid #e8edf3;
+      flex-shrink: 0;
+    }
+
+    .input-bar textarea {
+      flex: 1;
+      border: 1.5px solid #dce3ee;
+      border-radius: 22px;
+      padding: 10px 16px;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.9rem;
+      resize: none;
+      outline: none;
+      max-height: 110px;
+      overflow-y: auto;
+      transition: border-color .2s;
+      line-height: 1.4;
+      scrollbar-width: none;
+    }
+    .input-bar textarea:focus { border-color: var(--navy2); }
+    .input-bar textarea::-webkit-scrollbar { display:none; }
+    .input-bar textarea::placeholder { color:#bbb; }
+
+    .send-btn {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--navy), var(--navy2));
+      border: none; border-radius: 13px;
+      color: var(--gold);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all .2s;
+      box-shadow: 0 3px 10px rgba(13,43,78,0.3);
+    }
+    .send-btn:hover  { transform:scale(1.07); }
+    .send-btn:active { transform:scale(0.95); }
+    .send-btn:disabled { opacity:.45; cursor:default; transform:none; }
+
+    /* ── Welcome card ── */
+    .welcome-card {
+      background: linear-gradient(135deg, var(--navy), var(--navy2));
+      border-radius: 18px;
+      padding: 20px;
+      color: white;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .welcome-card .wc-icon {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .welcome-card h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--gold);
+    }
+    .welcome-card p {
+      font-size: 0.8rem;
+      opacity: 0.82;
+      line-height: 1.5;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width:380px) {
+      .bubble { max-width:86%; font-size:0.84rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <button class="back-btn" onclick="history.back()">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <div class="ai-avatar">
+      🤖
+      <span class="online-dot"></span>
+    </div>
+    <div class="header-text">
+      <h3>KYU AI Assistant</h3>
+      <p><i class="fas fa-circle" style="font-size:.5rem;color:#4caf50"></i> Online · Kyambogo Campus Expert</p>
+    </div>
+    <button class="clear-btn" onclick="clearChat()" title="Clear chat">
+      <i class="fas fa-trash-can"></i>
+    </button>
+  </div>
+
+  <!-- Suggestion chips -->
+  <div class="chips-wrap" id="chipsWrap">
+    <span class="chip" onclick="sendChip(this)"><i class="fas fa-print"></i>Where can I print?</span>
+    <span class="chip" onclick="sendChip(this)"><i class="fas fa-utensils"></i>Best cafeteria?</span>
+    <span class="chip" onclick="sendChip(this)"><i class="fas fa-hospital"></i>Health centre location</span>
+    <span class="chip" onclick="sendChip(this)"><i class="fas fa-door-open"></i>Closest gate to hostels</span>
+    <span class="chip" onclick="sendChip(this)"><i class="fas fa-book"></i>Where is the library?</span>
+    <span class="chip" onclick="sendChip(this)"><i class="fas fa-wifi"></i>ICT centre directions</span>
+    <span class="chip" onclick="sendChip(this)"><i class="fas fa-futbol"></i>Sports facilities?</span>
+  </div>
+
+  <!-- Chat messages -->
+  <div class="chat-area" id="chatArea">
+
+    <div class="day-sep">Today</div>
+
+    <!-- Welcome card -->
+    <div class="welcome-card">
+      <span class="wc-icon">🎓</span>
+      <h4>Hello! I'm your KYU AI Assistant</h4>
+      <p>Ask me anything about Kyambogo University campus — locations, directions, facilities, or how to get anywhere. I know every corner of this campus!</p>
+    </div>
+
+    <!-- Greeting bubble -->
+    <div class="msg-row">
+      <div class="msg-avatar ai"><i class="fas fa-robot"></i></div>
+      <div>
+        <div class="bubble ai">
+          👋 Welcome to Kyambogo University! I can help you find any location on campus, suggest the best route, or answer questions about campus facilities.<br><br>
+          What would you like to know?
+        </div>
+        <div class="bubble-time" id="greetTime"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Input -->
+  <div class="input-bar">
+    <textarea id="msgInput" rows="1" placeholder="Ask about any campus location…"
+      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+      <i class="fas fa-paper-plane"></i>
+    </button>
+  </div>
+
+  <script>
+    // ── Campus knowledge base passed to the AI ────────────────────────────────
+    const CAMPUS_CONTEXT = `
+You are the official AI assistant for Kyambogo University (KYU) campus in Kampala, Uganda.
+You ONLY answer questions about Kyambogo University campus — locations, facilities, directions, and student services.
+For anything unrelated to campus, politely redirect.
+
+KEY CAMPUS LOCATIONS AND FACTS:
+
+ENTRANCES:
+- Main Gate: on Kyambogo Road, primary entrance, most accessible
+- Eastern Gate: near the Police Post on the east side
+- Western Gate: near Faculty of Science, west side
+
+ACADEMIC BUILDINGS:
+- Faculty of Engineering: west side of campus near Western Gate
+- Faculty of Science: close to Western Gate
+- Faculty of Arts and Humanities: central-west area
+- Faculty of Vocational Studies: far west side
+- School of Education: east-central area
+- School of Management: central area
+- School of Law: central area
+- School of Health Sciences: west side
+- School of Built Environment: west side
+
+ADMINISTRATION:
+- Administration Block (Senate): central campus, main admin hub
+- Guild Offices: next to Administration Block
+- Registrar's Office: inside Administration Block area
+- Finance Department: near Administration Block
+
+LIBRARIES:
+- Central Library (Main): central campus, largest library, open Mon–Sat
+- E-Library: near Central Library, computer-based research
+- Faculty of Engineering Library: inside Engineering building
+
+STUDENT ACCOMMODATION:
+- Girls Hostels (Block A & B): east side of campus
+- Boys Hostels (Block C & D): east-south side
+- International Students Hostel: east area
+- Closest gate to hostels: Eastern Gate
+
+DINING & SHOPPING:
+- Main Cafeteria: central campus, busiest at lunch (12pm–2pm)
+- Engineering Canteen: near Faculty of Engineering
+- Science Canteen: near Faculty of Science
+- Student Market: east side near hostels
+- Stanbic Bank & Centenary Bank: east side near Student Market
+- University Bookshop: central campus
+
+PRINTING & ICT:
+- Printing Press: central campus (near Registrar area) — best for large print jobs
+- ICT Center: central campus — for computer access, internet
+- Each faculty also has a secretariat that can help with small print jobs
+
+MEDICAL:
+- University Health Centre: open Mon–Fri 8am–5pm, handles general health
+- Dental Clinic: next to Health Centre
+- Pharmacy: also next to Health Centre
+
+RELIGIOUS:
+- Chapel (St. Francis): east side of campus
+- Mosque: east side near Chapel
+
+SPORTS:
+- Main Sports Ground: far west side, used for football and athletics
+- Basketball Court, Volleyball Court, Tennis Court, University Gym: west side cluster
+
+OTHER:
+- Freedom Square (Main Auditorium): central campus, used for major events
+- Police Post: near Eastern Gate
+- University Farm: far west side
+
+NAVIGATION TIPS:
+- The campus is walkable end-to-end in about 20 minutes
+- The main tarmac road runs through the centre from Main Gate
+- When giving directions, use landmarks like "pass the cafeteria", "turn at the Admin Block"
+- Recommend the closest gate to the user's destination when relevant
+
+RESPONSE STYLE:
+- Be warm, helpful and concise — you are talking to students on their phone
+- Use bullet points for lists of locations or steps
+- When a location is navigable, end your response with a [NAVIGATE:LocationName] tag — exactly matching one of these names:
+  Main Gate (Kyambogo Road), Eastern Gate (Police Post), Western Gate (Faculty of Science),
+  Administration Block (Senate), Guild Offices, Registrar's Office, Finance Department,
+  Central Library (Main), E-Library, Faculty of Engineering Library,
+  Faculty of Engineering, Faculty of Science, Faculty of Arts and Humanities,
+  Faculty of Vocational Studies, School of Education, School of Management, School of Law,
+  School of Health Sciences, School of Built Environment,
+  Girls Hostel (Block A), Girls Hostel (Block B), Boys Hostel (Block C), Boys Hostel (Block D),
+  International Students Hostel, Main Cafeteria, Faculty of Engineering Canteen,
+  Science Canteen, Student Market, Bank (Stanbic), Bank (Centenary),
+  Main Auditorium (Freedom Square), Engineering Lecture Hall, Science Lecture Hall, Arts Lecture Hall,
+  Sports Ground (Main), Basketball Court, Volleyball Court, Tennis Court, University Gym,
+  University Health Centre, Dental Clinic, Pharmacy,
+  ICT Center, Printing Press, University Bookshop, Chapel (St. Francis), Mosque, Police Post, University Farm
+- Only include one [NAVIGATE:...] tag per response, for the single most relevant destination
+`.trim();
+
+    // ── Chat history sent to the API ──────────────────────────────────────────
+    let history = [];
+
+    // ── Greeting time ─────────────────────────────────────────────────────────
+    document.getElementById('greetTime').textContent = nowTime();
+
+    function nowTime() {
+      return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    }
+
+    // ── Send via chip ─────────────────────────────────────────────────────────
+    function sendChip(el) {
+      const text = el.textContent.trim();
+      document.getElementById('msgInput').value = text;
+      sendMessage();
+    }
+
+    // ── Enter key ─────────────────────────────────────────────────────────────
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    // ── Auto-resize textarea ──────────────────────────────────────────────────
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 110) + 'px';
+    }
+
+    // ── Clear chat ────────────────────────────────────────────────────────────
+    function clearChat() {
+      if (!confirm('Clear conversation?')) return;
+      history = [];
+      location.reload();
+    }
+
+    // ── Main send ─────────────────────────────────────────────────────────────
+    async function sendMessage() {
+      const input = document.getElementById('msgInput');
+      const text  = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      input.style.height = 'auto';
+      document.getElementById('sendBtn').disabled = true;
+
+      appendUserBubble(text);
+      history.push({ role:'user', content: text });
+
+      const typingEl = appendTyping();
+      scrollBottom();
+
+      try {
+        const reply = await callClaude(history);
+        typingEl.remove();
+        appendAiBubble(reply);
+        history.push({ role:'assistant', content: reply });
+      } catch(err) {
+        typingEl.remove();
+        appendAiBubble('⚠️ Sorry, I couldn\'t connect right now. Please check your internet and try again.');
+        console.error(err);
+      }
+
+      document.getElementById('sendBtn').disabled = false;
+      scrollBottom();
+    }
+
+    // ── Anthropic API call ────────────────────────────────────────────────────
+    async function callClaude(messages) {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: CAMPUS_CONTEXT,
+          messages: messages,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const data = await res.json();
+      return data.content[0].text;
+    }
+
+    // ── Render helpers ────────────────────────────────────────────────────────
+    function appendUserBubble(text) {
+      const row = document.createElement('div');
+      row.className = 'msg-row user';
+      row.innerHTML = `
+        <div class="msg-avatar user"><i class="fas fa-user"></i></div>
+        <div>
+          <div class="bubble user">${escHtml(text)}</div>
+          <div class="bubble-time" style="text-align:left">${nowTime()}</div>
+        </div>`;
+      document.getElementById('chatArea').appendChild(row);
+    }
+
+    function appendAiBubble(raw) {
+      // Parse [NAVIGATE:Location Name] tag
+      const navMatch = raw.match(/\[NAVIGATE:([^\]]+)\]/);
+      const cleanText = raw.replace(/\[NAVIGATE:[^\]]+\]/g, '').trim();
+
+      // Convert **bold**, *italic*, bullet lists to HTML
+      let html = escHtml(cleanText)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/\n•\s/g, '\n• ')
+        .replace(/\n/g, '<br>');
+
+      // Navigation button
+      let navBtn = '';
+      if (navMatch) {
+        const dest = navMatch[1].trim();
+        navBtn = `<br><a class="nav-link" href="/result" onclick="submitNav('${escAttr(dest)}');return false;">
+          <i class="fas fa-location-arrow"></i> Navigate to ${escHtml(dest)}
+        </a>`;
+      }
+
+      const row = document.createElement('div');
+      row.className = 'msg-row';
+      row.innerHTML = `
+        <div class="msg-avatar ai"><i class="fas fa-robot"></i></div>
+        <div>
+          <div class="bubble ai">${html}${navBtn}</div>
+          <div class="bubble-time">${nowTime()}</div>
+        </div>`;
+      document.getElementById('chatArea').appendChild(row);
+    }
+
+    function appendTyping() {
+      const row = document.createElement('div');
+      row.className = 'typing-row';
+      row.innerHTML = `
+        <div class="msg-avatar ai"><i class="fas fa-robot"></i></div>
+        <div class="typing-bubble">
+          <span></span><span></span><span></span>
+        </div>`;
+      document.getElementById('chatArea').appendChild(row);
+      return row;
+    }
+
+    // Submit nav form silently
+    function submitNav(dest) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/result';
+      const inp  = document.createElement('input');
+      inp.type   = 'hidden';
+      inp.name   = 'destination';
+      inp.value  = dest;
+      form.appendChild(inp);
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+    function scrollBottom() {
+      const area = document.getElementById('chatArea');
+      setTimeout(() => area.scrollTo({ top: area.scrollHeight, behavior:'smooth' }), 60);
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escAttr(s) { return s.replace(/'/g,"\\'"); }
+  </script>
+</body>
+</html>
