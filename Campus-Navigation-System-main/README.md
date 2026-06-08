@@ -20,7 +20,7 @@ KYAMBOGO CAMPUS NAVIGATOR - Setup Instructions
 4. Open in browser:
    http://localhost:5000
 
- **  alternatively**
+    Alternatively
    https://uniway-2.onrender.com/
 
 ROUTING FIX NOTES:
