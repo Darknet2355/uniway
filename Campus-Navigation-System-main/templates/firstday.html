@@ -11,842 +11,890 @@
       --navy:  #0d2b4e;
       --navy2: #1a4a7a;
       --gold:  #ffd700;
-      --gold2: #e6b800;
       --bg:    #f0f3f8;
       --green: #4caf50;
       --red:   #f44336;
     }
-
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { height:100%; font-family:'Segoe UI',sans-serif; background:var(--bg); overflow:hidden; }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html,body { height:100%; font-family:'Segoe UI',sans-serif; background:var(--bg); overflow:hidden; }
     body { display:flex; flex-direction:column; }
 
-    /* ────────────── HEADER ────────────── */
-    .header {
-      background: linear-gradient(135deg, var(--navy), var(--navy2));
-      padding: 13px 16px;
+    /* ══════════════════════════════════════════
+       HEADER  — always on top, never scrolls
+    ══════════════════════════════════════════ */
+    .top-bar {
+      background: linear-gradient(135deg,var(--navy),var(--navy2));
+      padding: 12px 16px;
       display: flex; align-items: center; gap: 12px;
       flex-shrink: 0;
       box-shadow: 0 3px 16px rgba(0,0,0,0.28);
-      z-index: 10;
+      z-index: 100;
     }
-    .back-btn {
-      width:38px; height:38px;
-      background:rgba(255,255,255,0.15); border:none; border-radius:10px;
-      color:white; font-size:1rem; cursor:pointer;
+    .hd-back {
+      width:40px; height:40px; min-width:40px;
+      background:rgba(255,255,255,0.18);
+      border:none; border-radius:10px;
+      color:white; font-size:1.05rem; cursor:pointer;
       display:flex; align-items:center; justify-content:center;
-      flex-shrink:0; transition:background .2s;
+      transition:background .2s;
     }
-    .back-btn:hover { background:rgba(255,255,255,0.28); }
-    .header-text { flex:1; min-width:0; }
-    .header-text h3 { color:white; font-size:0.95rem; font-weight:700; margin:0 0 1px; }
-    .header-text p  { color:var(--gold); font-size:0.68rem; margin:0; }
+    .hd-back:active { background:rgba(255,255,255,0.35); }
+    .hd-text { flex:1; min-width:0; }
+    .hd-text h3 { color:white; font-size:0.92rem; font-weight:700; margin:0 0 1px; }
+    .hd-text p  { color:var(--gold); font-size:0.67rem; margin:0; }
+    .prog-wrap  { flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+    .prog-lbl   { color:rgba(255,255,255,0.7); font-size:0.63rem; }
+    .prog-outer { width:68px; height:6px; background:rgba(255,255,255,0.2); border-radius:3px; overflow:hidden; }
+    .prog-inner { height:100%; background:var(--gold); border-radius:3px; transition:width .5s ease; }
 
-    /* Progress bar in header */
-    .progress-wrap {
-      flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:3px;
-    }
-    .progress-label { color:rgba(255,255,255,0.75); font-size:0.65rem; }
-    .progress-bar-outer {
-      width:70px; height:6px; background:rgba(255,255,255,0.2); border-radius:3px; overflow:hidden;
-    }
-    .progress-bar-inner {
-      height:100%; background:var(--gold); border-radius:3px;
-      transition:width .5s ease;
-    }
+    /* ══════════════════════════════════════════
+       MAIN AREA  — fills remaining space
+       Each "page" is a flex column that fills
+       this area so the footer always sticks.
+    ══════════════════════════════════════════ */
+    .main-area { flex:1; position:relative; overflow:hidden; }
 
-    /* ────────────── SCREEN CONTAINER ────────────── */
-    .screen-wrap {
-      flex:1; overflow:hidden; position:relative;
-    }
-
-    /* Every screen is absolute, slides in/out */
-    .screen {
+    /* A page fills the main area completely */
+    .page {
       position:absolute; inset:0;
-      overflow-y:auto;
-      padding:0;
-      transition:transform .4s cubic-bezier(.4,0,.2,1), opacity .4s;
+      display:flex; flex-direction:column;
+      transition:transform .38s cubic-bezier(.4,0,.2,1), opacity .38s;
+      will-change:transform;
     }
-    .screen.hidden-left  { transform:translateX(-100%); opacity:0; pointer-events:none; }
-    .screen.hidden-right { transform:translateX( 100%); opacity:0; pointer-events:none; }
-    .screen.active       { transform:translateX(0);     opacity:1; }
+    .page.off-right { transform:translateX(100%); opacity:0; pointer-events:none; }
+    .page.off-left  { transform:translateX(-100%); opacity:0; pointer-events:none; }
+    .page.on        { transform:translateX(0);     opacity:1; }
 
-    /* ────────────── WELCOME SCREEN ────────────── */
-    .welcome-screen {
-      background: linear-gradient(160deg, var(--navy) 0%, var(--navy2) 60%, #1e5a8a 100%);
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      padding:30px 24px; text-align:center; color:white;
+    /* Scrollable content region inside a page */
+    .scroll-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+    .scroll-body::-webkit-scrollbar { display:none; }
+
+    /* Fixed footer inside each page */
+    .page-footer {
+      flex-shrink:0;
+      background:white;
+      border-top:1px solid #e8edf3;
+      padding:12px 16px;
+      display:flex; gap:10px;
     }
+    .btn-f {
+      flex:1; padding:14px 10px; border-radius:14px;
+      font-family:'Segoe UI',sans-serif; font-size:0.9rem; font-weight:700;
+      border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      min-height:48px; /* touch target */
+      transition:transform .15s, opacity .15s;
+    }
+    .btn-f:active { transform:scale(0.97); opacity:.85; }
+    .btn-back { background:#eef1f7; color:var(--navy); flex:0 0 52px; border-radius:14px; }
+    .btn-next { background:var(--navy); color:var(--gold); flex:2; }
+    .btn-gold { background:var(--gold); color:var(--navy); }
 
+    /* ══════════════════════════════════════════
+       PAGE 0 — WELCOME
+    ══════════════════════════════════════════ */
+    .welcome-body {
+      background:linear-gradient(160deg,var(--navy) 0%,var(--navy2) 55%,#1e5a8a 100%);
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:flex-start; padding:28px 24px 20px;
+      text-align:center; color:white;
+      gap:0;
+    }
     .kyu-badge {
-      width:90px; height:90px;
+      width:84px; height:84px;
       background:rgba(255,255,255,0.12);
       border:3px solid rgba(255,215,0,0.5);
-      border-radius:24px;
+      border-radius:22px;
       display:flex; align-items:center; justify-content:center;
-      font-size:2.8rem;
-      margin-bottom:22px;
-      box-shadow:0 10px 30px rgba(0,0,0,0.3);
+      font-size:2.6rem; margin-bottom:18px;
+      box-shadow:0 8px 28px rgba(0,0,0,0.3);
       animation:pulse 2.5s ease-in-out infinite;
     }
     @keyframes pulse {
-      0%,100%{box-shadow:0 10px 30px rgba(0,0,0,0.3),0 0 0 0 rgba(255,215,0,0.2)}
-      50%    {box-shadow:0 10px 30px rgba(0,0,0,0.3),0 0 0 14px rgba(255,215,0,0)}
+      0%,100%{box-shadow:0 8px 28px rgba(0,0,0,0.3),0 0 0 0 rgba(255,215,0,0.25)}
+      50%    {box-shadow:0 8px 28px rgba(0,0,0,0.3),0 0 0 14px rgba(255,215,0,0)}
     }
+    .welcome-body h1 { font-size:1.6rem; font-weight:800; line-height:1.2; margin-bottom:10px; }
+    .welcome-body h1 span { color:var(--gold); }
+    .welcome-body .intro { font-size:0.85rem; opacity:.82; line-height:1.6; margin-bottom:22px; max-width:300px; }
 
-    .welcome-screen h1 {
-      font-size:1.7rem; font-weight:800;
-      line-height:1.15; margin-bottom:10px;
-    }
-    .welcome-screen h1 span { color:var(--gold); }
-    .welcome-screen p {
-      font-size:0.88rem; opacity:0.82;
-      line-height:1.6; max-width:320px; margin:0 auto 28px;
-    }
-
-    .name-input-wrap {
-      width:100%; max-width:320px;
+    .inp-wrap {
+      width:100%; max-width:310px;
       background:rgba(255,255,255,0.1);
       border:1.5px solid rgba(255,215,0,0.35);
-      border-radius:14px; padding:12px 18px;
-      display:flex; align-items:center; gap:10px;
-      margin-bottom:18px;
+      border-radius:13px; padding:11px 16px;
+      display:flex; align-items:center; gap:10px; margin-bottom:16px;
     }
-    .name-input-wrap i { color:var(--gold); font-size:1rem; }
-    .name-input-wrap input {
+    .inp-wrap i  { color:var(--gold); }
+    .inp-wrap input {
       flex:1; background:transparent; border:none; outline:none;
-      color:white; font-family:'Segoe UI',sans-serif; font-size:0.95rem;
+      color:white; font-family:'Segoe UI',sans-serif; font-size:0.93rem;
     }
-    .name-input-wrap input::placeholder { color:rgba(255,255,255,0.45); }
+    .inp-wrap input::placeholder { color:rgba(255,255,255,0.42); }
 
-    .faculty-grid {
+    .fac-label { font-size:0.78rem; opacity:.7; margin-bottom:10px; }
+
+    .fac-grid {
       display:grid; grid-template-columns:1fr 1fr;
-      gap:8px; width:100%; max-width:320px; margin-bottom:22px;
+      gap:8px; width:100%; max-width:310px; margin-bottom:20px;
     }
-    .faculty-chip {
-      background:rgba(255,255,255,0.08);
-      border:1.5px solid rgba(255,255,255,0.15);
-      border-radius:11px; padding:10px 8px;
+    .fac-chip {
+      background:rgba(255,255,255,0.07);
+      border:1.5px solid rgba(255,255,255,0.14);
+      border-radius:11px; padding:10px 6px;
       text-align:center; cursor:pointer;
-      transition:all .2s; font-size:0.78rem; color:white;
+      transition:all .2s; font-size:0.77rem; color:rgba(255,255,255,0.85);
     }
-    .faculty-chip i { display:block; font-size:1.2rem; color:var(--gold); margin-bottom:5px; }
-    .faculty-chip.selected {
-      background:rgba(255,215,0,0.15);
-      border-color:var(--gold); color:var(--gold); font-weight:600;
-    }
+    .fac-chip i { display:block; font-size:1.15rem; color:var(--gold); margin-bottom:4px; }
+    .fac-chip.sel { background:rgba(255,215,0,0.18); border-color:var(--gold); color:var(--gold); font-weight:700; }
+    .fac-chip:active { transform:scale(0.96); }
 
-    .btn-primary-gold {
-      padding:14px 32px; font-size:1rem; font-weight:700;
+    .welcome-footer { flex-shrink:0; padding:14px 24px 20px; background:transparent; }
+    .btn-begin {
+      width:100%; padding:15px; border-radius:50px;
       background:var(--gold); color:var(--navy);
-      border:none; border-radius:50px;
-      cursor:pointer; transition:all .25s;
-      box-shadow:0 6px 20px rgba(255,215,0,0.4);
-      width:100%; max-width:320px;
-      font-family:'Segoe UI',sans-serif;
+      border:none; font-family:'Segoe UI',sans-serif;
+      font-size:1rem; font-weight:700; cursor:pointer;
+      box-shadow:0 6px 20px rgba(255,215,0,0.45);
+      display:flex; align-items:center; justify-content:center; gap:9px;
+      transition:all .2s; min-height:50px;
     }
-    .btn-primary-gold:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(255,215,0,0.55); }
-    .btn-primary-gold i { margin-right:8px; }
+    .btn-begin:active { transform:scale(0.98); opacity:.88; }
 
-    /* ────────────── TOUR SCREEN ────────────── */
-    .tour-screen { padding:0; background:var(--bg); }
-
-    .tour-header {
-      background:white;
-      padding:14px 16px 0;
-      border-bottom:1px solid #e8edf3;
+    /* ══════════════════════════════════════════
+       PAGE 1 — TOUR
+    ══════════════════════════════════════════ */
+    .tour-subheader {
+      background:white; padding:10px 16px 0;
+      border-bottom:1px solid #e8edf3; flex-shrink:0;
     }
-
-    /* Step indicators */
-    .step-dots {
-      display:flex; gap:6px; justify-content:center;
-      padding:10px 0 14px;
+    .tour-subheader .stop-label {
+      font-size:0.7rem; color:#999; font-weight:700;
+      text-transform:uppercase; letter-spacing:.5px;
     }
-    .dot {
-      height:6px; border-radius:3px;
-      background:#dce3ee; transition:all .3s;
-    }
+    .step-dots { display:flex; gap:6px; padding:8px 0 12px; }
+    .dot { height:6px; border-radius:3px; background:#dce3ee; transition:all .3s; }
     .dot.done   { background:var(--green); width:16px; }
-    .dot.active { background:var(--navy); width:24px; }
+    .dot.active { background:var(--navy);  width:24px; }
     .dot.todo   { width:6px; }
 
-    /* Tour card */
+    /* tour card */
     .tour-card {
-      margin:16px; border-radius:20px; overflow:hidden;
-      box-shadow:0 4px 20px rgba(0,0,0,0.1);
-      animation:cardIn .35s ease both;
+      margin:14px 16px 16px; border-radius:20px; overflow:hidden;
+      box-shadow:0 4px 20px rgba(0,0,0,0.1); animation:fadeUp .3s ease both;
     }
-    @keyframes cardIn {
-      from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)}
-    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 
     .card-hero {
-      height:160px; display:flex; align-items:center; justify-content:center;
-      font-size:5rem; position:relative; overflow:hidden;
+      height:150px; display:flex; align-items:center;
+      justify-content:center; font-size:4.5rem;
     }
+    .card-body { background:white; padding:16px; }
+    .card-body h3 { color:var(--navy); font-size:1.05rem; font-weight:700; margin-bottom:6px; }
+    .card-body p  { color:#555; font-size:0.84rem; line-height:1.6; }
 
-    .card-body { background:white; padding:18px; }
-    .card-body h3 { color:var(--navy); font-size:1.1rem; font-weight:700; margin-bottom:6px; }
-    .card-body p  { color:#555; font-size:0.85rem; line-height:1.6; }
-
-    .fact-pills {
-      display:flex; flex-wrap:wrap; gap:7px; margin-top:12px;
-    }
-    .fact-pill {
+    .facts { display:flex; flex-wrap:wrap; gap:7px; margin-top:11px; }
+    .fact  {
       background:#f0f3f8; border-radius:20px;
-      padding:5px 12px; font-size:0.75rem;
-      color:var(--navy); font-weight:600;
+      padding:5px 11px; font-size:0.73rem; color:var(--navy); font-weight:600;
       display:flex; align-items:center; gap:5px;
     }
-    .fact-pill i { color:var(--gold); }
+    .fact i { color:var(--gold); }
 
-    /* AI tip box */
     .ai-tip {
-      background:linear-gradient(135deg,rgba(13,43,78,0.06),rgba(26,74,122,0.06));
-      border-left:4px solid var(--gold);
-      border-radius:0 12px 12px 0;
-      padding:12px 14px; margin-top:14px;
-      font-size:0.82rem; color:#444; line-height:1.5;
+      background:rgba(13,43,78,0.05); border-left:4px solid var(--gold);
+      border-radius:0 11px 11px 0; padding:11px 13px; margin-top:13px;
+      font-size:0.81rem; color:#444; line-height:1.55;
     }
     .ai-tip strong { color:var(--navy); }
 
-    /* Nav buttons at bottom of tour */
-    .tour-nav {
-      display:flex; gap:10px;
-      padding:14px 16px;
-      background:white; border-top:1px solid #e8edf3;
-      flex-shrink:0;
-    }
-    .btn-nav {
-      flex:1; padding:13px; border-radius:13px;
-      font-family:'Segoe UI',sans-serif; font-size:0.9rem; font-weight:600;
-      cursor:pointer; border:none; transition:all .2s;
+    .btn-nav-card {
       display:flex; align-items:center; justify-content:center; gap:8px;
+      width:100%; padding:12px; border-radius:12px;
+      background:var(--navy); color:var(--gold); border:none;
+      font-family:'Segoe UI',sans-serif; font-size:0.85rem; font-weight:700;
+      cursor:pointer; margin-top:13px; transition:opacity .2s; min-height:46px;
     }
-    .btn-back-nav { background:#f0f3f8; color:var(--navy); }
-    .btn-next-nav { background:var(--navy); color:var(--gold); flex:2; }
-    .btn-next-nav:hover { background:var(--navy2); }
+    .btn-nav-card:active { opacity:.8; }
 
-    /* Navigate button in card */
-    .btn-navigate-card {
-      display:flex; align-items:center; gap:8px; justify-content:center;
-      width:100%; padding:11px; border-radius:12px;
-      background:var(--navy); color:var(--gold);
-      border:none; font-family:'Segoe UI',sans-serif;
-      font-size:0.85rem; font-weight:700; cursor:pointer;
-      margin-top:14px; transition:opacity .2s;
+    /* loading dots */
+    .ldots { display:inline-flex; gap:4px; align-items:center; }
+    .ldots span {
+      width:6px; height:6px; background:#bbb; border-radius:50%;
+      animation:ld 1.1s ease-in-out infinite;
     }
-    .btn-navigate-card:hover { opacity:.85; }
+    .ldots span:nth-child(2){animation-delay:.18s}
+    .ldots span:nth-child(3){animation-delay:.36s}
+    @keyframes ld {
+      0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px);background:#888}
+    }
 
-    /* ────────────── QUIZ SCREEN ────────────── */
-    .quiz-screen { padding:16px; background:var(--bg); }
-
-    .quiz-header {
+    /* ══════════════════════════════════════════
+       PAGE 2 — QUIZ
+    ══════════════════════════════════════════ */
+    .quiz-wrap { padding:16px; }
+    .quiz-banner {
       background:linear-gradient(135deg,var(--navy),var(--navy2));
-      border-radius:18px; padding:18px; color:white;
-      text-align:center; margin-bottom:16px;
+      border-radius:16px; padding:16px; color:white; text-align:center; margin-bottom:14px;
     }
-    .quiz-header h3 { font-size:1rem; font-weight:700; margin-bottom:4px; }
-    .quiz-header p  { font-size:0.78rem; opacity:0.8; }
-    .score-display  { font-size:2rem; font-weight:800; color:var(--gold); margin:8px 0 2px; }
+    .quiz-banner h3 { font-size:0.95rem; font-weight:700; margin-bottom:3px; }
+    .quiz-banner p  { font-size:0.75rem; opacity:.78; }
+    .score-big      { font-size:2rem; font-weight:800; color:var(--gold); line-height:1; margin:7px 0 2px; }
 
-    .question-card {
-      background:white; border-radius:18px;
-      padding:20px; box-shadow:0 3px 12px rgba(0,0,0,0.08);
-      margin-bottom:14px; animation:cardIn .3s ease both;
+    .q-card {
+      background:white; border-radius:16px;
+      padding:18px; box-shadow:0 3px 12px rgba(0,0,0,0.08);
+      animation:fadeUp .28s ease both;
     }
-    .q-number { font-size:0.7rem; color:#aaa; font-weight:700;
-      text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
-    .q-text   { font-size:0.95rem; color:var(--navy); font-weight:600;
-      line-height:1.5; margin-bottom:16px; }
+    .q-num  { font-size:0.68rem; color:#aaa; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:7px; }
+    .q-text { font-size:0.93rem; color:var(--navy); font-weight:600; line-height:1.5; margin-bottom:14px; }
 
-    .options { display:flex; flex-direction:column; gap:9px; }
-    .option {
-      padding:13px 16px; border-radius:12px;
+    .opts   { display:flex; flex-direction:column; gap:8px; }
+    .opt {
+      padding:12px 14px; border-radius:12px;
       border:2px solid #e8edf3; background:#fafbfd;
-      font-size:0.88rem; color:#333; cursor:pointer;
-      transition:all .2s; text-align:left;
-      font-family:'Segoe UI',sans-serif;
+      font-size:0.86rem; color:#333; cursor:pointer;
       display:flex; align-items:center; gap:10px;
+      font-family:'Segoe UI',sans-serif;
+      transition:border-color .15s, background .15s;
+      text-align:left; min-height:48px;
     }
-    .option:hover:not(.disabled) { border-color:var(--navy2); background:#f0f3f8; }
-    .option.correct  { border-color:var(--green); background:rgba(76,175,80,0.08); color:#2e7d32; font-weight:600; }
-    .option.wrong    { border-color:var(--red);   background:rgba(244,67,54,0.07);  color:#c62828; }
-    .option.disabled { cursor:default; }
-    .option-letter {
-      width:26px; height:26px; border-radius:8px;
+    .opt:active:not(.disabled) { background:#f0f3f8; }
+    .opt.correct  { border-color:var(--green); background:rgba(76,175,80,0.09); color:#2e7d32; font-weight:600; }
+    .opt.wrong    { border-color:var(--red);   background:rgba(244,67,54,0.07); color:#c62828; }
+    .opt.disabled { cursor:default; }
+    .opt-ltr {
+      width:26px; height:26px; min-width:26px; border-radius:8px;
       background:#e8edf3; color:var(--navy);
       display:flex; align-items:center; justify-content:center;
-      font-size:0.75rem; font-weight:700; flex-shrink:0;
-      transition:all .2s;
+      font-size:0.73rem; font-weight:700; transition:all .2s;
     }
-    .option.correct .option-letter { background:var(--green); color:white; }
-    .option.wrong   .option-letter { background:var(--red);   color:white; }
+    .opt.correct .opt-ltr { background:var(--green); color:white; }
+    .opt.wrong   .opt-ltr { background:var(--red);   color:white; }
 
-    .q-feedback {
-      margin-top:12px; padding:10px 14px; border-radius:11px;
-      font-size:0.82rem; line-height:1.5; display:none;
+    .q-fb {
+      margin-top:11px; padding:10px 13px; border-radius:10px;
+      font-size:0.81rem; line-height:1.5; display:none;
     }
-    .q-feedback.show { display:block; }
-    .q-feedback.correct-fb { background:rgba(76,175,80,0.1); color:#2e7d32; }
-    .q-feedback.wrong-fb   { background:rgba(244,67,54,0.08); color:#c62828; }
+    .q-fb.show        { display:block; }
+    .q-fb.ok          { background:rgba(76,175,80,0.1);  color:#2e7d32; }
+    .q-fb.bad         { background:rgba(244,67,54,0.08); color:#c62828; }
 
-    /* ────────────── FINISH SCREEN ────────────── */
-    .finish-screen {
-      background:linear-gradient(160deg,var(--navy) 0%,var(--navy2) 60%,#1e5a8a 100%);
+    /* ══════════════════════════════════════════
+       PAGE 3 — FINISH
+    ══════════════════════════════════════════ */
+    .finish-body {
+      flex:1; background:linear-gradient(160deg,var(--navy) 0%,var(--navy2) 55%,#1e5a8a 100%);
       display:flex; flex-direction:column; align-items:center;
-      justify-content:center; padding:30px 24px; text-align:center;
-      color:white;
+      justify-content:center; padding:30px 24px; text-align:center; color:white;
+      overflow-y:auto;
     }
-
-    .trophy { font-size:5rem; margin-bottom:18px; animation:pop .5s .2s ease both; }
+    .trophy { font-size:5rem; animation:pop .5s .2s ease both; opacity:0; }
     @keyframes pop {
-      0%  { transform:scale(0) rotate(-20deg); opacity:0; }
-      70% { transform:scale(1.15) rotate(5deg); }
-      100%{ transform:scale(1) rotate(0); opacity:1; }
+      0%  {transform:scale(0) rotate(-20deg);opacity:0}
+      70% {transform:scale(1.18) rotate(4deg);opacity:1}
+      100%{transform:scale(1) rotate(0);opacity:1}
     }
-
-    .finish-screen h2 { font-size:1.6rem; font-weight:800; color:var(--gold); margin-bottom:8px; }
-    .finish-screen p  { font-size:0.88rem; opacity:0.82; max-width:300px; line-height:1.6; margin:0 auto 22px; }
-
-    .final-score {
+    .stars  { font-size:2rem; letter-spacing:4px; margin:10px 0 4px; }
+    .finish-body h2 { font-size:1.55rem; font-weight:800; color:var(--gold); margin-bottom:8px; }
+    .finish-body .msg { font-size:0.86rem; opacity:.82; line-height:1.6; max-width:290px; margin:0 auto 20px; }
+    .score-box {
       background:rgba(255,255,255,0.1); border:2px solid rgba(255,215,0,0.4);
-      border-radius:18px; padding:16px 28px; margin-bottom:24px;
+      border-radius:16px; padding:14px 26px; margin-bottom:22px;
       display:flex; flex-direction:column; align-items:center;
     }
-    .final-score .num  { font-size:3rem; font-weight:800; color:var(--gold); line-height:1; }
-    .final-score .lbl  { font-size:0.75rem; opacity:.7; margin-top:3px; }
-
-    .action-btns { display:flex; flex-direction:column; gap:10px; width:100%; max-width:300px; }
-    .btn-finish-primary {
-      padding:14px; border-radius:50px; font-size:1rem; font-weight:700;
-      background:var(--gold); color:var(--navy); border:none; cursor:pointer;
-      font-family:'Segoe UI',sans-serif; transition:all .25s;
-      box-shadow:0 6px 20px rgba(255,215,0,0.4);
+    .score-box .num { font-size:2.8rem; font-weight:800; color:var(--gold); line-height:1; }
+    .score-box .lbl { font-size:0.73rem; opacity:.68; margin-top:3px; }
+    .fin-btns { display:flex; flex-direction:column; gap:10px; width:100%; max-width:290px; }
+    .fin-btn {
+      padding:14px; border-radius:50px;
+      font-family:'Segoe UI',sans-serif; font-size:0.95rem; font-weight:700;
+      cursor:pointer; border:none; min-height:50px;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      transition:opacity .2s;
     }
-    .btn-finish-primary:hover { transform:translateY(-2px); }
-    .btn-finish-secondary {
-      padding:13px; border-radius:50px; font-size:0.92rem; font-weight:600;
-      background:rgba(255,255,255,0.12); color:white;
-      border:1.5px solid rgba(255,255,255,0.25); cursor:pointer;
-      font-family:'Segoe UI',sans-serif; transition:all .25s;
-    }
-    .btn-finish-secondary:hover { background:rgba(255,255,255,0.2); }
-
-    /* Stars row */
-    .stars { font-size:2rem; margin-bottom:6px; letter-spacing:4px; }
-
-    /* Loading dots for AI */
-    .ai-loading { display:inline-flex; gap:5px; align-items:center; vertical-align:middle; }
-    .ai-loading span {
-      width:6px; height:6px; background:#aaa; border-radius:50%;
-      animation:ld 1.2s ease-in-out infinite;
-    }
-    .ai-loading span:nth-child(2){animation-delay:.2s}
-    .ai-loading span:nth-child(3){animation-delay:.4s}
-    @keyframes ld {
-      0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px);background:#555}
-    }
-
-    @media(max-width:380px){
-      .welcome-screen h1{font-size:1.4rem}
-      .faculty-grid{grid-template-columns:1fr 1fr}
-    }
+    .fin-btn:active { opacity:.82; }
+    .fin-btn.primary   { background:var(--gold); color:var(--navy); box-shadow:0 6px 20px rgba(255,215,0,0.4); }
+    .fin-btn.secondary { background:rgba(255,255,255,0.13); color:white; border:1.5px solid rgba(255,255,255,0.25); }
   </style>
 </head>
 <body>
 
-  <!-- ── HEADER ── -->
-  <div class="header">
-    <button class="back-btn" onclick="handleBack()">
-      <i class="fas fa-arrow-left"></i>
-    </button>
-    <div class="header-text">
-      <h3><i class="fas fa-graduation-cap" style="color:var(--gold);margin-right:7px"></i>First Day Guide</h3>
-      <p id="headerSub">Welcome to Kyambogo University!</p>
-    </div>
-    <div class="progress-wrap">
-      <span class="progress-label" id="progressLabel">0 / 6</span>
-      <div class="progress-bar-outer">
-        <div class="progress-bar-inner" id="progressBar" style="width:0%"></div>
-      </div>
-    </div>
+<!-- ══ HEADER ══ -->
+<div class="top-bar">
+  <button class="hd-back" id="hdBack" onclick="handleBack()">
+    <i class="fas fa-arrow-left"></i>
+  </button>
+  <div class="hd-text">
+    <h3><i class="fas fa-graduation-cap" style="color:var(--gold);margin-right:6px"></i>First Day Guide</h3>
+    <p id="hdSub">Welcome to Kyambogo University!</p>
   </div>
+  <div class="prog-wrap">
+    <span class="prog-lbl" id="progLbl">Step 1</span>
+    <div class="prog-outer"><div class="prog-inner" id="progBar" style="width:0%"></div></div>
+  </div>
+</div>
 
-  <!-- ── SCREENS ── -->
-  <div class="screen-wrap" id="screenWrap">
+<!-- ══ MAIN ══ -->
+<div class="main-area" id="mainArea">
 
-    <!-- ═══════════════ SCREEN 0 — WELCOME ═══════════════ -->
-    <div class="screen active welcome-screen" id="screen0">
+  <!-- ─── PAGE 0: WELCOME ─── -->
+  <div class="page on" id="pg0">
+    <div class="scroll-body welcome-body">
       <div class="kyu-badge">🎓</div>
       <h1>Welcome to<br><span>Kyambogo</span><br>University!</h1>
-      <p>This short guide will walk you through the most important places on campus so you never feel lost on your first day.</p>
+      <p class="intro">This guide walks you through the most important places on campus so you never feel lost on your first day. Let's get you settled in!</p>
 
-      <div class="name-input-wrap">
-        <i class="fas fa-user"></i>
-        <input type="text" id="studentName" placeholder="What's your name?" maxlength="30"
-               onkeydown="if(event.key==='Enter') startGuide()">
+      <div class="inp-wrap">
+        <i class="fas fa-user-graduate"></i>
+        <input type="text" id="nameInput" placeholder="What's your name?" maxlength="30"
+               autocomplete="off" onkeydown="if(event.key==='Enter')startGuide()">
       </div>
 
-      <p style="font-size:0.8rem;opacity:.7;margin-bottom:12px;max-width:300px">
-        Which faculty are you joining?
-      </p>
-
-      <div class="faculty-grid" id="facultyGrid">
-        <div class="faculty-chip" onclick="selectFaculty(this,'Engineering')">
-          <i class="fas fa-cogs"></i>Engineering
-        </div>
-        <div class="faculty-chip" onclick="selectFaculty(this,'Science')">
-          <i class="fas fa-flask"></i>Science
-        </div>
-        <div class="faculty-chip" onclick="selectFaculty(this,'Arts')">
-          <i class="fas fa-palette"></i>Arts
-        </div>
-        <div class="faculty-chip" onclick="selectFaculty(this,'Education')">
-          <i class="fas fa-chalkboard-teacher"></i>Education
-        </div>
-        <div class="faculty-chip" onclick="selectFaculty(this,'Management')">
-          <i class="fas fa-briefcase"></i>Management
-        </div>
-        <div class="faculty-chip" onclick="selectFaculty(this,'Health Sciences')">
-          <i class="fas fa-heartbeat"></i>Health Sciences
-        </div>
+      <p class="fac-label">Which faculty are you joining?</p>
+      <div class="fac-grid">
+        <div class="fac-chip" onclick="pickFac(this,'Engineering')"><i class="fas fa-cogs"></i>Engineering</div>
+        <div class="fac-chip" onclick="pickFac(this,'Science')"><i class="fas fa-flask"></i>Science</div>
+        <div class="fac-chip" onclick="pickFac(this,'Arts')"><i class="fas fa-palette"></i>Arts &amp; Humanities</div>
+        <div class="fac-chip" onclick="pickFac(this,'Education')"><i class="fas fa-chalkboard-teacher"></i>Education</div>
+        <div class="fac-chip" onclick="pickFac(this,'Management')"><i class="fas fa-briefcase"></i>Management</div>
+        <div class="fac-chip" onclick="pickFac(this,'Health Sciences')"><i class="fas fa-heartbeat"></i>Health Sciences</div>
+        <div class="fac-chip" onclick="pickFac(this,'Vocational Studies')"><i class="fas fa-tools"></i>Vocational Studies</div>
+        <div class="fac-chip" onclick="pickFac(this,'Law')"><i class="fas fa-balance-scale"></i>Law</div>
       </div>
-
-      <button class="btn-primary-gold" onclick="startGuide()">
-        <i class="fas fa-play"></i> Begin My Tour
+    </div>
+    <!-- footer OUTSIDE scroll-body so it never scrolls away -->
+    <div class="welcome-footer" style="background:linear-gradient(160deg,#1a4a7a,#1e5a8a)">
+      <button class="btn-begin" onclick="startGuide()">
+        <i class="fas fa-play"></i> Begin My Campus Tour
       </button>
     </div>
-
-    <!-- ═══════════════ SCREEN 1 — TOUR ═══════════════ -->
-    <div class="screen hidden-right" id="screen1">
-      <!-- dynamic content injected here -->
-    </div>
-
-    <!-- ═══════════════ SCREEN 2 — QUIZ ═══════════════ -->
-    <div class="screen hidden-right" id="screen2">
-      <!-- dynamic content injected here -->
-    </div>
-
-    <!-- ═══════════════ SCREEN 3 — FINISH ═══════════════ -->
-    <div class="screen hidden-right finish-screen" id="screen3">
-      <!-- dynamic content injected here -->
-    </div>
-
   </div>
 
-  <script>
-    // ── State ─────────────────────────────────────────────────────────────────
-    let studentName    = 'Fresher';
-    let selectedFaculty = 'your faculty';
-    let tourStep       = 0;
-    let quizIndex      = 0;
-    let score          = 0;
-    let currentScreen  = 0;
+  <!-- ─── PAGE 1: TOUR ─── -->
+  <div class="page off-right" id="pg1">
+    <div class="tour-subheader" id="tourSubHdr">
+      <!-- injected by buildTour() -->
+    </div>
+    <div class="scroll-body" id="tourScroll">
+      <!-- injected by buildTour() -->
+    </div>
+    <!-- PINNED footer — never inside scroll -->
+    <div class="page-footer" id="tourFooter">
+      <button class="btn-f btn-back" id="tourBack" onclick="prevTour()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <button class="btn-f btn-next" id="tourNext" onclick="nextTour()">
+        Next <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
 
-    // ── Tour stops ────────────────────────────────────────────────────────────
-    const TOUR_STOPS = [
-      {
-        emoji: '🚪', color: '#1a4a7a',
-        title: 'The Main Gate',
-        dest: 'Main Gate (Kyambogo Road)',
-        body: `This is your primary entry point into Kyambogo University. Located on Kyambogo Road, it's where most students arrive by boda-boda, taxi, or on foot. The security team here can always help you with directions if you're unsure.`,
-        facts: [
-          { icon:'fa-clock',        text:'Open 24/7' },
-          { icon:'fa-shield-halved',text:'Security desk inside' },
-          { icon:'fa-bus',          text:'Nearest taxi stage: Kyambogo Rd' },
-        ],
-        tip: '💡 If you arrive by taxi, tell the conductor <strong>"Kyambogo University"</strong> — most routes pass the main gate directly.',
-      },
-      {
-        emoji: '🏛️', color: '#0d3d6e',
-        title: 'Administration Block',
-        dest: 'Administration Block (Senate)',
-        body: `This is the heart of the university's administration. You'll come here to collect your student ID, sort out registration issues, and find the Registrar's and Finance offices. When in doubt, start here.`,
-        facts: [
-          { icon:'fa-id-card',      text:'Student ID collection' },
-          { icon:'fa-file-alt',     text:'Registration & records' },
-          { icon:'fa-money-bill',   text:'Finance office inside' },
-          { icon:'fa-clock',        text:'Mon–Fri 8am–5pm' },
-        ],
-        tip: '💡 Bring your admission letter and national ID on your first visit. The Registrar's office is on the ground floor.',
-      },
-      {
-        emoji: '📚', color: '#1b5e20',
-        title: 'Central Library',
-        dest: 'Central Library (Main)',
-        body: `The largest library on campus, stocked with textbooks, journals, and research materials. You'll spend a lot of time here. The E-Library next door has computers for digital research and internet access.`,
-        facts: [
-          { icon:'fa-book',         text:'Thousands of titles' },
-          { icon:'fa-laptop',       text:'E-Library next door' },
-          { icon:'fa-clock',        text:'Mon–Sat 8am–8pm' },
-          { icon:'fa-wifi',         text:'Free campus Wi-Fi' },
-        ],
-        tip: '💡 Register your student ID at the library desk on your first visit to get borrowing rights. You can borrow up to 3 books at a time.',
-      },
-      {
-        emoji: '🍽️', color: '#7b3f00',
-        title: 'Main Cafeteria',
-        dest: 'Main Cafeteria',
-        body: `The busiest eating spot on campus. Hot meals, snacks, and drinks at student-friendly prices. There's also a canteen near each faculty if the main one is too crowded during lunch hour.`,
-        facts: [
-          { icon:'fa-utensils',     text:'Breakfast, lunch & dinner' },
-          { icon:'fa-clock',        text:'Busiest: 12pm – 2pm' },
-          { icon:'fa-coins',        text:'Budget-friendly prices' },
-          { icon:'fa-location-dot', text:'Alternative: Faculty canteens' },
-        ],
-        tip: '💡 Arrive before 12:30pm to avoid the lunch rush. The Engineering and Science canteens are much quieter if you're in that area.',
-      },
-      {
-        emoji: '🏥', color: '#880e4f',
-        title: 'Health Centre',
-        dest: 'University Health Centre',
-        body: `Your on-campus clinic for any medical needs — fever, injuries, or general check-ups. The Dental Clinic and Pharmacy are right next door. Always keep your student ID with you when visiting.`,
-        facts: [
-          { icon:'fa-stethoscope',  text:'General health services' },
-          { icon:'fa-tooth',        text:'Dental clinic on-site' },
-          { icon:'fa-pills',        text:'Pharmacy next door' },
-          { icon:'fa-clock',        text:'Mon–Fri 8am–5pm' },
-        ],
-        tip: '💡 For emergencies outside clinic hours, the nearest hospital is <strong>Mulago National Referral Hospital</strong>. The Police Post near the Eastern Gate can also assist.',
-      },
-      {
-        emoji: '🏠', color: '#37474f',
-        title: 'Student Hostels',
-        dest: 'Girls Hostel (Block A)',
-        body: `The on-campus hostels are on the east side of campus, close to the Eastern Gate. Girls' hostels (Block A & B) and Boys' hostels (Block C & D) each have common rooms, study areas, and 24-hour security. The International Students Hostel is also nearby.`,
-        facts: [
-          { icon:'fa-bed',          text:'Girls: Block A & B' },
-          { icon:'fa-bed',          text:'Boys: Block C & D' },
-          { icon:'fa-shield-halved',text:'24-hour security' },
-          { icon:'fa-door-open',    text:'Closest gate: Eastern Gate' },
-        ],
-        tip: '💡 The Eastern Gate is the shortest route to the hostels. Avoid walking alone at night — use the well-lit main paths and travel in groups.',
-      },
-    ];
+  <!-- ─── PAGE 2: QUIZ ─── -->
+  <div class="page off-right" id="pg2">
+    <div class="scroll-body" id="quizScroll">
+      <!-- injected by buildQuiz() -->
+    </div>
+    <div class="page-footer" id="quizFooter" style="display:none">
+      <button class="btn-f btn-next" id="quizNext" onclick="nextQ()">
+        Next Question <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
 
-    // ── Quiz questions ────────────────────────────────────────────────────────
-    const QUIZ_QUESTIONS = [
-      {
-        q: 'Which gate should you use to get to the student hostels quickest?',
-        options: ['Main Gate (Kyambogo Road)', 'Eastern Gate (Police Post)', 'Western Gate (Faculty of Science)', 'Any gate is the same distance'],
-        correct: 1,
-        explanation: 'The Eastern Gate is the closest entrance to the student hostels (Block A–D). The Police Post is also right there for added security.',
-      },
-      {
-        q: 'Where do you go to collect your student ID card and sort out registration issues?',
-        options: ['Central Library', 'Faculty of Science Office', 'Administration Block (Senate)', 'Guild Offices'],
-        correct: 2,
-        explanation: 'The Administration Block (Senate) houses the Registrar\'s Office, Finance Department, and is where all student records and IDs are handled.',
-      },
-      {
-        q: 'When is the Main Cafeteria most crowded?',
-        options: ['8am – 9am (breakfast)', '12pm – 2pm (lunch)', '5pm – 6pm (dinner)', 'It is never very crowded'],
-        correct: 1,
-        explanation: 'The lunch rush (12pm–2pm) is the busiest time. Arriving before 12:30 or heading to a faculty canteen helps you avoid long queues.',
-      },
-      {
-        q: 'You need to borrow textbooks and access digital research. Which two places do you visit?',
-        options: ['ICT Center and Guild Offices', 'Central Library and E-Library', 'Bookshop and Printing Press', 'Administration Block and Registrar'],
-        correct: 1,
-        explanation: 'The Central Library has physical textbooks and journals. The E-Library right next door gives you computer access and digital research databases.',
-      },
-      {
-        q: 'You feel sick late in the evening. The health centre is closed. What is the best first step?',
-        options: ['Wait until morning', 'Go to the Police Post near Eastern Gate for help', 'Go directly to Main Gate only', 'Call the Administration Block'],
-        correct: 1,
-        explanation: 'The Police Post near the Eastern Gate operates 24/7 and can assist in emergencies including directing you to Mulago National Referral Hospital.',
-      },
-    ];
+  <!-- ─── PAGE 3: FINISH ─── -->
+  <div class="page off-right" id="pg3">
+    <div class="finish-body" id="finishBody">
+      <!-- injected by buildFinish() -->
+    </div>
+  </div>
 
-    // ── Faculty selection ─────────────────────────────────────────────────────
-    function selectFaculty(el, name) {
-      document.querySelectorAll('.faculty-chip').forEach(c => c.classList.remove('selected'));
-      el.classList.add('selected');
-      selectedFaculty = name;
-    }
+</div><!-- /main-area -->
 
-    // ── Start guide ───────────────────────────────────────────────────────────
-    function startGuide() {
-      const nameVal = document.getElementById('studentName').value.trim();
-      studentName = nameVal || 'Fresher';
-      tourStep = 0;
-      buildTourScreen(tourStep);
-      goToScreen(1);
-      updateProgress();
-    }
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════════
+let sName   = 'Fresher';
+let sFac    = 'your faculty';
+let tourIdx = 0;
+let qIdx    = 0;
+let score   = 0;
+let curPage = 0;
 
-    // ── Build tour screen ─────────────────────────────────────────────────────
-    function buildTourScreen(idx) {
-      const stop = TOUR_STOPS[idx];
-      const s = document.getElementById('screen1');
+// ══════════════════════════════════════════════════════════════════
+//  TOUR CONTENT
+// ══════════════════════════════════════════════════════════════════
+const STOPS = [
+  {
+    emoji:'🚪', color:'#1a4a7a',
+    title:'The Main Gate',
+    dest:'Main Gate (Kyambogo Road)',
+    body:`Your first landmark. The Main Gate on Kyambogo Road is where most students arrive — whether by boda-boda, taxi, or on foot. Security staff here are always available to help you with basic directions when you're just starting out.`,
+    facts:[
+      {i:'fa-clock',        t:'Open 24 hours, 7 days'},
+      {i:'fa-shield-halved',t:'Security desk at entrance'},
+      {i:'fa-bus',          t:'Taxi stage: Kyambogo Rd'},
+      {i:'fa-map-signs',    t:'Campus map posted inside gate'},
+    ],
+    fallback:'Tell your taxi conductor "Kyambogo University" — most routes pass the main gate directly. From here, the Admin Block is a 5-minute walk straight ahead.',
+  },
+  {
+    emoji:'🏛️', color:'#0d3d6e',
+    title:'Administration Block (Senate)',
+    dest:'Administration Block (Senate)',
+    body:`Everything official happens here. This is where you collect your student ID, sort out registration problems, pay fees, and find the Registrar's office. On your first day, come here first — bring your admission letter and national ID.`,
+    facts:[
+      {i:'fa-id-card',    t:'Student ID collection here'},
+      {i:'fa-file-alt',   t:'Registrar\'s Office inside'},
+      {i:'fa-money-bill', t:'Finance Department here'},
+      {i:'fa-clock',      t:'Open Mon–Fri, 8am–5pm'},
+    ],
+    fallback:'The Admin Block is the big building at the centre of campus. The Registrar\'s office is on the ground floor. Always carry your admission letter on your first visit.',
+  },
+  {
+    emoji:'📚', color:'#1b5e20',
+    title:'Central Library',
+    dest:'Central Library (Main)',
+    body:`The Central Library is your academic home. It holds thousands of textbooks, journals, and reference materials across all faculties. Right next door is the E-Library — a computer lab with internet access and digital research databases.`,
+    facts:[
+      {i:'fa-book',   t:'Thousands of textbooks & journals'},
+      {i:'fa-laptop', t:'E-Library next door (computers)'},
+      {i:'fa-clock',  t:'Open Mon–Sat, 8am–8pm'},
+      {i:'fa-wifi',   t:'Free campus Wi-Fi inside'},
+    ],
+    fallback:'Register your student ID at the library reception desk to get borrowing rights. You can borrow up to 3 books at a time. The E-Library is open during the same hours.',
+  },
+  {
+    emoji:'🖨️', color:'#4a235a',
+    title:'Printing Press & ICT Centre',
+    dest:'ICT Center',
+    body:`Two essential spots every student needs. The Printing Press handles large printing jobs, binding, and photocopying at low cost. The ICT Centre nearby has computer workstations for internet access, software use, and research when you need a dedicated machine.`,
+    facts:[
+      {i:'fa-print',      t:'Printing, binding & photocopying'},
+      {i:'fa-desktop',    t:'ICT: computer workstations'},
+      {i:'fa-wifi',       t:'Internet access available'},
+      {i:'fa-coins',      t:'Very affordable rates'},
+    ],
+    fallback:'For assignment printing, the Printing Press gives better-quality output and stapling services. Faculty secretariats also handle small printing jobs if you\'re in a hurry.',
+  },
+  {
+    emoji:'🍽️', color:'#7b3f00',
+    title:'Main Cafeteria & Canteens',
+    dest:'Main Cafeteria',
+    body:`The Main Cafeteria is the largest eating spot on campus — breakfast, lunch, and dinner at student-friendly prices. During the busy lunch hour it gets crowded. Each faculty also has its own canteen which is much quieter and closer to your classes.`,
+    facts:[
+      {i:'fa-utensils',     t:'3 meals a day served'},
+      {i:'fa-clock',        t:'Busiest: 12:00pm – 2:00pm'},
+      {i:'fa-store',        t:'Faculty canteens available too'},
+      {i:'fa-coins',        t:'Budget-friendly student pricing'},
+    ],
+    fallback:'Beat the lunch rush by arriving before 12:30pm. The Engineering and Science canteens are quieter options if your classes are on the west side of campus.',
+  },
+  {
+    emoji:'🏦', color:'#1a237e',
+    title:'Banks & Student Market',
+    dest:'Bank (Stanbic)',
+    body:`On the east side of campus near the hostels you'll find a Stanbic Bank branch, a Centenary Bank branch, and the Student Market — a busy shopping area with stationery, toiletries, snacks, and everyday essentials. Very convenient for hostel students.`,
+    facts:[
+      {i:'fa-piggy-bank',   t:'Stanbic & Centenary Bank branches'},
+      {i:'fa-shopping-bag', t:'Student Market nearby'},
+      {i:'fa-book-open',    t:'Stationery & supplies'},
+      {i:'fa-location-dot', t:'East side, near Eastern Gate'},
+    ],
+    fallback:'Open a student bank account at Stanbic or Centenary early in semester — many bursary payments and financial services go through these branches on campus.',
+  },
+  {
+    emoji:'🏥', color:'#880e4f',
+    title:'University Health Centre',
+    dest:'University Health Centre',
+    body:`Your on-campus clinic for any medical needs — fever, injuries, prescriptions, or a general check-up. The Dental Clinic and Pharmacy are right next door. Always carry your student ID when visiting. For emergencies after hours, the Police Post near the Eastern Gate can assist.`,
+    facts:[
+      {i:'fa-stethoscope', t:'General medical consultations'},
+      {i:'fa-tooth',       t:'Dental clinic next door'},
+      {i:'fa-pills',       t:'Pharmacy on-site'},
+      {i:'fa-clock',       t:'Open Mon–Fri, 8am–5pm'},
+    ],
+    fallback:'For after-hours emergencies, the Police Post near the Eastern Gate is staffed 24/7 and can direct you to Mulago National Referral Hospital which is the nearest major hospital.',
+  },
+  {
+    emoji:'⛪', color:'#2d6a4f',
+    title:'Chapel & Mosque',
+    dest:'Chapel (St. Francis)',
+    body:`Kyambogo University has both a Chapel (St. Francis) and a Mosque, both located on the east side of campus. These are open to all students for prayer, quiet reflection, and community events. Interfaith events are also held here regularly throughout the semester.`,
+    facts:[
+      {i:'fa-cross',        t:'Chapel: St. Francis'},
+      {i:'fa-mosque',       t:'Mosque next to the chapel'},
+      {i:'fa-users',        t:'Open to all students'},
+      {i:'fa-calendar',     t:'Interfaith events held here'},
+    ],
+    fallback:'Both the chapel and mosque welcome all students regardless of denomination. They are also quiet spots for studying or reflection in between classes.',
+  },
+  {
+    emoji:'🏠', color:'#37474f',
+    title:'Student Hostels',
+    dest:'Girls Hostel (Block A)',
+    body:`The on-campus hostels sit on the east side of campus, a short walk from the Eastern Gate. Girls stay in Block A and Block B; boys in Block C and Block D. There's also an International Students Hostel nearby. All blocks have security, study areas, and common rooms.`,
+    facts:[
+      {i:'fa-female',       t:'Girls: Block A & B'},
+      {i:'fa-male',         t:'Boys: Block C & D'},
+      {i:'fa-globe',        t:'International Students Hostel'},
+      {i:'fa-door-open',    t:'Closest entry: Eastern Gate'},
+    ],
+    fallback:'The Eastern Gate is the quickest route to all hostels. A well-lit main path connects the gate to all four blocks. Travel in groups at night and always keep your room locked.',
+  },
+  {
+    emoji:'⚽', color:'#1b4332',
+    title:'Sports & Recreation',
+    dest:'Sports Ground (Main)',
+    body:`The sports facilities are on the west side of campus near the Faculty of Vocational Studies. There's a main football and athletics ground, basketball and volleyball courts, tennis courts, and a university gym. Sports clubs and intramural leagues are active throughout the year.`,
+    facts:[
+      {i:'fa-futbol',       t:'Football & athletics ground'},
+      {i:'fa-basketball-ball',t:'Basketball & volleyball courts'},
+      {i:'fa-table-tennis', t:'Tennis courts available'},
+      {i:'fa-dumbbell',     t:'University gym on-site'},
+    ],
+    fallback:'Join a sports club early — it\'s one of the best ways to meet people across faculties. Guild Sports organises inter-faculty competitions every semester. Registration is free.',
+  },
+];
 
-      // Step dots
-      let dotsHtml = '<div class="step-dots">';
-      TOUR_STOPS.forEach((_, i) => {
-        if      (i < idx)  dotsHtml += `<div class="dot done"></div>`;
-        else if (i === idx) dotsHtml += `<div class="dot active"></div>`;
-        else                dotsHtml += `<div class="dot todo"></div>`;
-      });
-      dotsHtml += '</div>';
+// ══════════════════════════════════════════════════════════════════
+//  QUIZ QUESTIONS
+// ══════════════════════════════════════════════════════════════════
+const QUESTIONS = [
+  {
+    q:'Which gate is closest to the student hostels?',
+    opts:['Main Gate (Kyambogo Road)','Western Gate (Faculty of Science)','Eastern Gate (Police Post)','All gates are equal distance'],
+    ans:2,
+    exp:'The Eastern Gate is the closest entry point to all four hostel blocks and the International Students Hostel, making it the default gate for hostel residents.',
+  },
+  {
+    q:'You need to collect your student ID and sort out a registration problem. Where do you go first?',
+    opts:['Central Library','ICT Centre','Guild Offices','Administration Block (Senate)'],
+    ans:3,
+    exp:'The Administration Block (Senate) houses the Registrar\'s Office, Finance Department, and all student records. It\'s always your first stop for official matters.',
+  },
+  {
+    q:'What two things must you bring when visiting the Administration Block on your first day?',
+    opts:['Passport and bank card','Admission letter and national ID','Student ID and fee receipt','Birth certificate and reference letter'],
+    ans:1,
+    exp:'Your admission letter proves you were accepted, and your national ID verifies your identity. These are required for processing your student registration.',
+  },
+  {
+    q:'When is the Main Cafeteria most crowded?',
+    opts:['7am – 9am','12pm – 2pm','3pm – 5pm','It is always equally busy'],
+    ans:1,
+    exp:'The lunch rush between 12pm and 2pm is the busiest time. Arriving before 12:30pm or using a faculty canteen helps you avoid the long queues.',
+  },
+  {
+    q:'Where do you go to borrow textbooks AND use a computer for research?',
+    opts:['ICT Centre and Guild Offices','Admin Block and Bookshop','Central Library and E-Library','Printing Press and Registrar\'s Office'],
+    ans:2,
+    exp:'The Central Library has physical textbooks and journals. The E-Library right next door provides computer workstations and digital research access. Both require your student ID.',
+  },
+  {
+    q:'The Health Centre is closed. You feel unwell at 9pm. What is the best first step?',
+    opts:['Wait until morning and hope it gets better','Call the Registrar\'s office','Go to the Police Post near the Eastern Gate for emergency assistance','Go to the Main Gate and ask a security guard to drive you'],
+    ans:2,
+    exp:'The Police Post near the Eastern Gate operates 24/7. Officers there can provide first aid, emergency contacts, and directions to Mulago National Referral Hospital.',
+  },
+  {
+    q:'Which side of campus are the Banking services and Student Market located?',
+    opts:['West side, near Faculty of Engineering','Central campus, next to the Library','North side near the Sports Ground','East side, near the Eastern Gate and hostels'],
+    ans:3,
+    exp:'Both Stanbic Bank, Centenary Bank and the Student Market are on the east side of campus, conveniently close to the student hostels.',
+  },
+  {
+    q:'You want to print and bind your final year project report. Where is the best place?',
+    opts:['ICT Centre','Printing Press','E-Library','Admin Block secretariat'],
+    ans:1,
+    exp:'The Printing Press specialises in high-quality printing, photocopying and binding services at student prices. It\'s the best option for large jobs like final year project reports.',
+  },
+];
 
-      // Facts
-      let factsHtml = '<div class="fact-pills">';
-      stop.facts.forEach(f => {
-        factsHtml += `<div class="fact-pill"><i class="fas ${f.icon}"></i>${f.text}</div>`;
-      });
-      factsHtml += '</div>';
+// ══════════════════════════════════════════════════════════════════
+//  WELCOME SCREEN LOGIC
+// ══════════════════════════════════════════════════════════════════
+function pickFac(el, name) {
+  document.querySelectorAll('.fac-chip').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  sFac = name;
+}
 
-      // Back button
-      const backBtn = idx === 0
-        ? `<button class="btn-nav btn-back-nav" onclick="goToScreen(0)"><i class="fas fa-arrow-left"></i></button>`
-        : `<button class="btn-nav btn-back-nav" onclick="prevTour()"><i class="fas fa-arrow-left"></i></button>`;
+function startGuide() {
+  const n = document.getElementById('nameInput').value.trim();
+  sName = n || 'Fresher';
+  tourIdx = 0;
+  buildTour();
+  goPage(1);
+}
 
-      const isLast = idx === TOUR_STOPS.length - 1;
-      const nextLabel = isLast ? `<i class="fas fa-brain"></i> Take the Quiz` : `Next <i class="fas fa-arrow-right"></i>`;
-      const nextFn    = isLast ? 'startQuiz()' : 'nextTour()';
+// ══════════════════════════════════════════════════════════════════
+//  TOUR
+// ══════════════════════════════════════════════════════════════════
+function buildTour() {
+  const stop = STOPS[tourIdx];
 
-      s.innerHTML = `
-        <div class="tour-header">
-          <p style="font-size:0.75rem;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">
-            Stop ${idx + 1} of ${TOUR_STOPS.length}
-          </p>
-          ${dotsHtml}
+  // ── Sub-header dots ──
+  let dots = '';
+  STOPS.forEach((_, i) => {
+    if      (i < tourIdx)  dots += '<div class="dot done"></div>';
+    else if (i === tourIdx) dots += '<div class="dot active"></div>';
+    else                   dots += '<div class="dot todo"></div>';
+  });
+  document.getElementById('tourSubHdr').innerHTML = `
+    <div class="stop-label">Stop ${tourIdx+1} of ${STOPS.length}</div>
+    <div class="step-dots">${dots}</div>`;
+
+  // ── Card body ──
+  let factsHtml = stop.facts.map(f =>
+    `<div class="fact"><i class="fas ${f.i}"></i>${f.t}</div>`
+  ).join('');
+
+  document.getElementById('tourScroll').innerHTML = `
+    <div class="tour-card">
+      <div class="card-hero" style="background:linear-gradient(135deg,${stop.color},${stop.color}bb)">
+        ${stop.emoji}
+      </div>
+      <div class="card-body">
+        <h3>${stop.title}</h3>
+        <p>${stop.body}</p>
+        <div class="facts">${factsHtml}</div>
+        <div class="ai-tip">
+          <strong>🤖 AI Tip for ${sFac} students</strong><br>
+          <span id="aiTipTxt"><span class="ldots"><span></span><span></span><span></span></span></span>
         </div>
-        <div class="tour-card">
-          <div class="card-hero" style="background:linear-gradient(135deg,${stop.color},${stop.color}cc)">
-            ${stop.emoji}
-          </div>
-          <div class="card-body">
-            <h3>${stop.title}</h3>
-            <p>${stop.body}</p>
-            ${factsHtml}
-            <div class="ai-tip" id="aiTip">
-              <strong>🤖 AI Tip</strong> <span id="aiTipText"><span class="ai-loading"><span></span><span></span><span></span></span></span>
-            </div>
-            <button class="btn-navigate-card" onclick="navigateTo('${stop.dest}')">
-              <i class="fas fa-location-arrow"></i> Navigate to ${stop.title}
-            </button>
-          </div>
-        </div>
-        <div class="tour-nav">
-          ${backBtn}
-          <button class="btn-nav btn-next-nav" onclick="${nextFn}">${nextLabel}</button>
-        </div>`;
+        <button class="btn-nav-card" onclick="navTo('${stop.dest.replace(/'/g,"\\'")}')">
+          <i class="fas fa-location-arrow"></i> Navigate to ${stop.title}
+        </button>
+      </div>
+    </div>`;
 
-      // Fetch personalised AI tip
-      fetchAiTip(stop, idx);
-      updateProgress();
-    }
+  document.getElementById('tourScroll').scrollTop = 0;
 
-    // ── Personalised AI tip ───────────────────────────────────────────────────
-    async function fetchAiTip(stop, idx) {
-      const prompt = `You are a friendly senior student at Kyambogo University welcoming a fresher named ${studentName} who joined the Faculty of ${selectedFaculty}.
-Give ONE short, practical, personalised tip (max 2 sentences) about "${stop.title}" specifically for a ${selectedFaculty} student. Be specific, warm and campus-accurate.
-Do NOT start with "As a" or "Since you are" — just give the tip directly. No intro phrases.`;
+  // ── Footer buttons ──
+  const backBtn = document.getElementById('tourBack');
+  const nextBtn = document.getElementById('tourNext');
+  const isLast  = tourIdx === STOPS.length - 1;
 
-      try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 120,
-            messages: [{ role:'user', content: prompt }],
-          }),
-        });
-        const data = await res.json();
-        const tip  = data.content[0].text.trim();
-        const el   = document.getElementById('aiTipText');
-        if (el) el.textContent = tip;
-      } catch {
-        const el = document.getElementById('aiTipText');
-        if (el) el.textContent = stop.tip.replace(/<[^>]+>/g,'');
-      }
-    }
+  backBtn.style.display = 'flex';  // always show
 
-    // ── Tour navigation ───────────────────────────────────────────────────────
-    function nextTour() {
-      if (tourStep < TOUR_STOPS.length - 1) {
-        tourStep++;
-        buildTourScreen(tourStep);
-      }
-    }
+  nextBtn.innerHTML = isLast
+    ? '<i class="fas fa-brain"></i> Take the Quiz'
+    : 'Next <i class="fas fa-arrow-right"></i>';
 
-    function prevTour() {
-      if (tourStep > 0) {
-        tourStep--;
-        buildTourScreen(tourStep);
-      }
-    }
+  // Fetch personalised tip from backend
+  fetchTip(stop);
+  updateProgress();
+}
 
-    // ── Navigate to a destination ─────────────────────────────────────────────
-    function navigateTo(dest) {
-      const form = document.createElement('form');
-      form.method = 'POST'; form.action = '/result';
-      const inp = document.createElement('input');
-      inp.type = 'hidden'; inp.name = 'destination'; inp.value = dest;
-      form.appendChild(inp);
-      document.body.appendChild(form);
-      form.submit();
-    }
+function prevTour() {
+  if (tourIdx > 0) { tourIdx--; buildTour(); }
+  else             { goPage(0); }
+}
 
-    // ── Build & start quiz ────────────────────────────────────────────────────
-    function startQuiz() {
-      quizIndex = 0;
-      score     = 0;
-      buildQuizScreen();
-      goToScreen(2);
-      updateProgress();
-    }
+function nextTour() {
+  if (tourIdx < STOPS.length - 1) { tourIdx++; buildTour(); }
+  else                             { startQuiz(); }
+}
 
-    function buildQuizScreen() {
-      const q  = QUIZ_QUESTIONS[quizIndex];
-      const s  = document.getElementById('screen2');
-      const letters = ['A','B','C','D'];
+// ── AI tip via Flask backend (avoids CORS) ──
+async function fetchTip(stop) {
+  try {
+    const res = await fetch('/api/ai-tip', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        faculty: sFac,
+        name:    sName,
+        stop:    stop.title,
+      }),
+    });
+    const data = await res.json();
+    const el   = document.getElementById('aiTipTxt');
+    if (el) el.textContent = data.tip || stop.fallback;
+  } catch {
+    const el = document.getElementById('aiTipTxt');
+    if (el) el.textContent = stop.fallback;
+  }
+}
 
-      let optionsHtml = '';
-      q.options.forEach((opt, i) => {
-        optionsHtml += `
-          <button class="option" id="opt${i}" onclick="answerQuiz(${i})">
-            <span class="option-letter">${letters[i]}</span>${opt}
-          </button>`;
-      });
+// ══════════════════════════════════════════════════════════════════
+//  QUIZ
+// ══════════════════════════════════════════════════════════════════
+function startQuiz() {
+  qIdx = 0; score = 0;
+  buildQuiz();
+  goPage(2);
+}
 
-      s.innerHTML = `
-        <div class="quiz-screen">
-          <div class="quiz-header">
-            <h3>🧠 Campus Knowledge Quiz</h3>
-            <p>Test what you've just learned about campus!</p>
-            <div class="score-display" id="scoreDisplay">${score} / ${quizIndex}</div>
-            <p style="font-size:0.7rem;opacity:.6">Question ${quizIndex+1} of ${QUIZ_QUESTIONS.length}</p>
-          </div>
-          <div class="question-card">
-            <div class="q-number">Question ${quizIndex+1}</div>
-            <div class="q-text">${q.q}</div>
-            <div class="options">${optionsHtml}</div>
-            <div class="q-feedback" id="qFeedback"></div>
-          </div>
-          <div style="padding:0 16px 20px">
-            <button class="btn-nav btn-next-nav" id="nextQuizBtn" onclick="nextQuestion()"
-              style="width:100%;display:none">
-              ${quizIndex === QUIZ_QUESTIONS.length - 1 ? '<i class="fas fa-flag-checkered"></i> See Results' : 'Next Question <i class="fas fa-arrow-right"></i>'}
-            </button>
-          </div>
-        </div>`;
-    }
+function buildQuiz() {
+  const q = QUESTIONS[qIdx];
+  const letters = ['A','B','C','D'];
 
-    function answerQuiz(chosen) {
-      const q = QUIZ_QUESTIONS[quizIndex];
-      const opts = document.querySelectorAll('.option');
-      const fb   = document.getElementById('qFeedback');
+  let optsHtml = q.opts.map((o, i) => `
+    <button class="opt" id="qo${i}" onclick="answerQ(${i})">
+      <span class="opt-ltr">${letters[i]}</span>${o}
+    </button>`).join('');
 
-      opts.forEach(o => o.classList.add('disabled'));
-      opts[q.correct].classList.add('correct');
+  const isLast = qIdx === QUESTIONS.length - 1;
 
-      if (chosen === q.correct) {
-        score++;
-        fb.textContent = `✅ Correct! ${q.explanation}`;
-        fb.className   = 'q-feedback correct-fb show';
-      } else {
-        opts[chosen].classList.add('wrong');
-        fb.textContent = `❌ Not quite. ${q.explanation}`;
-        fb.className   = 'q-feedback wrong-fb show';
-      }
+  document.getElementById('quizScroll').innerHTML = `
+    <div class="quiz-wrap">
+      <div class="quiz-banner">
+        <h3>🧠 Campus Knowledge Quiz</h3>
+        <p>Let's see how much you learned!</p>
+        <div class="score-big" id="scoreBig">${score} / ${qIdx}</div>
+        <p style="font-size:0.7rem;opacity:.6">Question ${qIdx+1} of ${QUESTIONS.length}</p>
+      </div>
+      <div class="q-card">
+        <div class="q-num">Question ${qIdx+1}</div>
+        <div class="q-text">${q.q}</div>
+        <div class="opts">${optsHtml}</div>
+        <div class="q-fb" id="qFb"></div>
+      </div>
+    </div>`;
 
-      document.getElementById('scoreDisplay').textContent = `${score} / ${quizIndex+1}`;
-      document.getElementById('nextQuizBtn').style.display = 'block';
-    }
+  document.getElementById('quizScroll').scrollTop = 0;
 
-    function nextQuestion() {
-      quizIndex++;
-      if (quizIndex < QUIZ_QUESTIONS.length) {
-        buildQuizScreen();
-      } else {
-        buildFinishScreen();
-        goToScreen(3);
-      }
-      updateProgress();
-    }
+  // Update next button label
+  const footer = document.getElementById('quizFooter');
+  const nxt    = document.getElementById('quizNext');
+  footer.style.display = 'none'; // hidden until answer chosen
+  nxt.innerHTML = isLast
+    ? '<i class="fas fa-flag-checkered"></i> See My Results'
+    : 'Next Question <i class="fas fa-arrow-right"></i>';
 
-    // ── Finish screen ─────────────────────────────────────────────────────────
-    function buildFinishScreen() {
-      const total  = QUIZ_QUESTIONS.length;
-      const pct    = Math.round((score / total) * 100);
-      const stars  = pct >= 80 ? '⭐⭐⭐' : pct >= 60 ? '⭐⭐' : '⭐';
-      const medal  = pct >= 80 ? '🏆' : pct >= 60 ? '🥈' : '🎖️';
-      const msg    = pct >= 80
-        ? `Amazing, ${studentName}! You clearly paid attention during the tour. You're ready to navigate KYU like a pro!`
-        : pct >= 60
-        ? `Good effort, ${studentName}! You know most of the campus already. Explore a bit more and you'll master it in no time.`
-        : `Don't worry, ${studentName}! The campus will feel familiar after a few days. You can always retake the tour or use the AI Assistant anytime.`;
+  updateProgress();
+}
 
-      document.getElementById('screen3').innerHTML = `
-        <div class="trophy">${medal}</div>
-        <div class="stars">${stars}</div>
-        <h2>Tour Complete!</h2>
-        <p>${msg}</p>
-        <div class="final-score">
-          <div class="num">${score}/${total}</div>
-          <div class="lbl">${pct}% · Campus Knowledge Score</div>
-        </div>
-        <div class="action-btns">
-          <button class="btn-finish-primary" onclick="window.location.href='/home'">
-            <i class="fas fa-compass"></i> Start Navigating Campus
-          </button>
-          <button class="btn-finish-primary" style="background:rgba(255,255,255,0.15);color:white;box-shadow:none"
-            onclick="window.location.href='/assistant'">
-            <i class="fas fa-robot"></i> Open AI Assistant
-          </button>
-          <button class="btn-finish-secondary" onclick="retakeGuide()">
-            <i class="fas fa-rotate-left"></i> Retake Guide
-          </button>
-        </div>`;
-    }
+function answerQ(chosen) {
+  const q    = QUESTIONS[qIdx];
+  const opts = document.querySelectorAll('.opt');
+  const fb   = document.getElementById('qFb');
 
-    function retakeGuide() {
-      tourStep = 0; quizIndex = 0; score = 0;
-      goToScreen(0);
-      updateProgress();
-    }
+  opts.forEach(o => o.classList.add('disabled'));
+  opts[q.ans].classList.add('correct');
 
-    // ── Screen transitions ────────────────────────────────────────────────────
-    const SCREENS = ['screen0','screen1','screen2','screen3'];
+  if (chosen === q.ans) {
+    score++;
+    fb.textContent = `✅ Correct! ${q.exp}`;
+    fb.className   = 'q-fb ok show';
+  } else {
+    opts[chosen].classList.add('wrong');
+    fb.textContent = `❌ Not quite. ${q.exp}`;
+    fb.className   = 'q-fb bad show';
+  }
 
-    function goToScreen(idx) {
-      SCREENS.forEach((id, i) => {
-        const el = document.getElementById(id);
-        el.classList.remove('active','hidden-left','hidden-right');
-        if      (i < idx)  el.classList.add('hidden-left');
-        else if (i > idx)  el.classList.add('hidden-right');
-        else               el.classList.add('active');
-      });
-      currentScreen = idx;
-      // Scroll new screen to top
-      setTimeout(() => {
-        const active = document.querySelector('.screen.active');
-        if (active) active.scrollTop = 0;
-      }, 50);
-    }
+  document.getElementById('scoreBig').textContent = `${score} / ${qIdx+1}`;
+  document.getElementById('quizFooter').style.display = 'flex';
+}
 
-    function handleBack() {
-      if (currentScreen === 0) { window.location.href = '/'; return; }
-      if (currentScreen === 1) { goToScreen(0); return; }
-      if (currentScreen === 2) { goToScreen(1); return; }
-      if (currentScreen === 3) { goToScreen(0); return; }
-    }
+function nextQ() {
+  qIdx++;
+  if (qIdx < QUESTIONS.length) { buildQuiz(); }
+  else                          { buildFinish(); goPage(3); }
+}
 
-    // ── Progress ──────────────────────────────────────────────────────────────
-    function updateProgress() {
-      const total  = TOUR_STOPS.length + QUIZ_QUESTIONS.length;
-      const done   = tourStep + (currentScreen >= 2 ? quizIndex : 0) + (currentScreen === 3 ? QUIZ_QUESTIONS.length : 0);
-      const pct    = Math.min(100, Math.round((done / total) * 100));
-      document.getElementById('progressBar').style.width  = pct + '%';
-      document.getElementById('progressLabel').textContent = `${done} / ${total}`;
+// ══════════════════════════════════════════════════════════════════
+//  FINISH
+// ══════════════════════════════════════════════════════════════════
+function buildFinish() {
+  const total = QUESTIONS.length;
+  const pct   = Math.round(score / total * 100);
+  const medal = pct >= 80 ? '🏆' : pct >= 60 ? '🥈' : '🎖️';
+  const stars = pct >= 80 ? '⭐⭐⭐' : pct >= 60 ? '⭐⭐' : '⭐';
+  const msg   = pct >= 80
+    ? `Outstanding, ${sName}! You know this campus better than most second-years. You're fully ready!`
+    : pct >= 60
+    ? `Good work, ${sName}! You've got a solid grip on campus. A few more walks around and you'll master it.`
+    : `No worries, ${sName}! Campus gets familiar fast. Keep the AI Assistant handy and you'll be fine!`;
 
-      const subs = ['Welcome!', 'Campus Tour', 'Quiz Time!', 'All Done! 🎉'];
-      document.getElementById('headerSub').textContent = subs[currentScreen] || '';
-    }
-  </script>
+  document.getElementById('finishBody').innerHTML = `
+    <div class="trophy">${medal}</div>
+    <div class="stars">${stars}</div>
+    <h2>Tour Complete!</h2>
+    <p class="msg">${msg}</p>
+    <div class="score-box">
+      <div class="num">${score}/${total}</div>
+      <div class="lbl">${pct}% Campus Knowledge</div>
+    </div>
+    <div class="fin-btns">
+      <button class="fin-btn primary" onclick="window.location.href='/home'">
+        <i class="fas fa-compass"></i> Start Navigating Campus
+      </button>
+      <button class="fin-btn primary" style="background:rgba(255,255,255,0.18);box-shadow:none;color:white"
+              onclick="window.location.href='/assistant'">
+        <i class="fas fa-robot"></i> Open AI Assistant
+      </button>
+      <button class="fin-btn secondary" onclick="retake()">
+        <i class="fas fa-rotate-left"></i> Retake Guide
+      </button>
+    </div>`;
+
+  updateProgress();
+}
+
+function retake() {
+  tourIdx = 0; qIdx = 0; score = 0;
+  buildTour();
+  goPage(0);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════════════════
+function navTo(dest) {
+  const f = document.createElement('form');
+  f.method = 'POST'; f.action = '/result';
+  const i = document.createElement('input');
+  i.type = 'hidden'; i.name = 'destination'; i.value = dest;
+  f.appendChild(i); document.body.appendChild(f); f.submit();
+}
+
+// ── Header back button ──
+function handleBack() {
+  if      (curPage === 0) window.location.href = '/';
+  else if (curPage === 1) { if (tourIdx > 0) { tourIdx--; buildTour(); } else goPage(0); }
+  else if (curPage === 2) goPage(1);
+  else if (curPage === 3) { tourIdx = 0; buildTour(); goPage(1); }
+}
+
+// ── Page transitions ──
+const PAGES = ['pg0','pg1','pg2','pg3'];
+function goPage(idx) {
+  PAGES.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('on','off-left','off-right');
+    if      (i < idx)  el.classList.add('off-left');
+    else if (i > idx)  el.classList.add('off-right');
+    else               el.classList.add('on');
+  });
+  curPage = idx;
+  updateProgress();
+
+  // Rebuild quiz when navigating back to it mid-quiz
+  if (idx === 2) document.getElementById('quizScroll').scrollTop = 0;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  PROGRESS BAR
+// ══════════════════════════════════════════════════════════════════
+function updateProgress() {
+  const total = STOPS.length + QUESTIONS.length;
+  let done = 0;
+  if      (curPage === 0) done = 0;
+  else if (curPage === 1) done = tourIdx;
+  else if (curPage === 2) done = STOPS.length + qIdx;
+  else                    done = total;
+
+  const pct = Math.round(done / total * 100);
+  document.getElementById('progBar').style.width = pct + '%';
+  document.getElementById('progLbl').textContent = `${done}/${total}`;
+
+  const subs = ['Welcome!','Campus Tour','Quiz Time 🧠','All Done! 🎉'];
+  document.getElementById('hdSub').textContent = subs[curPage] || '';
+}
+</script>
 </body>
 </html>
