@@ -564,22 +564,17 @@ RESPONSE STYLE:
       scrollBottom();
     }
 
-    // ── Anthropic API call ────────────────────────────────────────────────────
+    // ── AI call — routes through Flask to avoid CORS ───────────────────────
     async function callClaude(messages) {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system: CAMPUS_CONTEXT,
-          messages: messages,
-        }),
+        body: JSON.stringify({ messages }),
       });
-
-      if (!res.ok) throw new Error(`API ${res.status}`);
+      if (!res.ok) throw new Error('Server error ' + res.status);
       const data = await res.json();
-      return data.content[0].text;
+      if (data.error) throw new Error(data.error);
+      return data.reply;
     }
 
     // ── Render helpers ────────────────────────────────────────────────────────
