@@ -5,24 +5,38 @@ import math
 app = Flask(__name__)
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  GOOGLE GEMINI API  (free tier — no credit card needed)
-#  Get your free key at: https://aistudio.google.com/app/apikey
-#  Paste it below between the quotes
+#  GOOGLE GEMINI API  (free tier)
+#
+#  IMPORTANT — your current key returns 403 "Host not in allowlist"
+#  This means it has HTTP referrer restrictions enabled in Google Cloud.
+#
+#  To fix in 30 seconds:
+#  1. Go to https://console.cloud.google.com/apis/credentials
+#  2. Click your API key → scroll to "Application restrictions"
+#  3. Select "None"  (or "IP addresses" and add your server IP)
+#  4. Click Save — wait ~2 minutes, then restart Flask
+#
+#  Or just create a brand new key at https://aistudio.google.com/app/apikey
+#  (AI Studio keys have no restrictions by default)
 # ─────────────────────────────────────────────────────────────────────────────
+# ── HOW TO FIX THE 403 "Host not in allowlist" ERROR ──────────────────────
+#  Your current key has domain restrictions. Do ONE of these:
+#  Option A (easiest): Create a NEW key at https://aistudio.google.com/app/apikey
+#                      AI Studio keys have NO restrictions by default.
+#  Option B: Go to Google Cloud Console → Credentials → your key
+#             → under "Application restrictions" choose "None" → Save
+# ──────────────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY = "AIzaSyB-6oJGbcUfV4vV_-L_MTeRWjHah2Xgu0g"
-
-# Using gemini-1.5-flash — fastest & free
 GEMINI_MODEL   = "gemini-1.5-flash"
 GEMINI_BASE    = "https://generativelanguage.googleapis.com/v1beta/models"
 
 
 def gemini_url():
-    """Build the Gemini endpoint URL fresh each call so key changes are picked up."""
     return f"{GEMINI_BASE}/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  CAMPUS KNOWLEDGE  — shared by both AI endpoints
+#  CAMPUS KNOWLEDGE
 # ─────────────────────────────────────────────────────────────────────────────
 CAMPUS_CONTEXT = """
 You are the official AI assistant for Kyambogo University (KYU) campus in Kampala, Uganda.
@@ -51,47 +65,40 @@ Central/East: Education, Management, Law
 
 DINING:
 - Main Cafeteria: central campus, 3 meals/day, busiest 12pm-2pm
-- Faculty Engineering Canteen & Science Canteen: quieter, closer to classes
-- Student Market: east side near hostels — stationery, toiletries, snacks
+- Faculty Engineering Canteen and Science Canteen: quieter, closer to classes
+- Student Market: east side near hostels, stationery, toiletries, snacks
 
 BANKING:
-- Bank Stanbic & Bank Centenary: east side near Student Market
+- Bank Stanbic and Bank Centenary: east side near Student Market
 
 MEDICAL:
 - University Health Centre: general health, Mon-Fri 8am-5pm
-- Dental Clinic & Pharmacy: right next to Health Centre
-- After-hours emergency: Police Post near Eastern Gate (24/7) — nearest hospital is Mulago
+- Dental Clinic and Pharmacy: right next to Health Centre
+- After-hours emergency: Police Post near Eastern Gate (24/7), nearest hospital is Mulago
 
 RELIGIOUS:
-- Chapel (St. Francis) & Mosque: east side, open to all students
+- Chapel (St. Francis) and Mosque: east side, open to all students
 
 STUDENT HOSTELS (east side, near Eastern Gate):
-- Girls Hostel Block A & B, Boys Hostel Block C & D, International Students Hostel
+- Girls Hostel Block A and B, Boys Hostel Block C and D, International Students Hostel
 - All have 24-hour security and study areas
 
 SPORTS (west side):
 - Sports Ground (Main), Basketball Court, Volleyball Court, Tennis Court, University Gym
-- Sports clubs and inter-faculty competitions run every semester
+- Sports clubs and inter-faculty competitions every semester
 
 OTHER FACILITIES:
 - ICT Center: computer workstations and internet access
-- Printing Press: printing, binding, photocopying — best for large jobs like final year reports
+- Printing Press: printing, binding, photocopying, best for large jobs like final year reports
 - University Bookshop: textbooks and stationery
 - Police Post: near Eastern Gate, 24/7
 - University Farm: far west side
 
-NAVIGATION TIPS:
-- Campus is walkable end-to-end in about 20 minutes
-- Main tarmac road runs through the centre from Main Gate
-- Use well-known landmarks in directions: "pass the cafeteria", "turn at the Admin Block"
-
 RESPONSE RULES:
 - Be warm, concise, and mobile-friendly
 - Use short bullet points for lists
-- When your answer points to a specific navigable destination, end your response with exactly:
-  [NAVIGATE:ExactDestinationName]
-- Only include ONE [NAVIGATE:...] tag per response
-- Use ONLY these exact names inside the tag:
+- When your answer points to one specific navigable destination end with exactly: [NAVIGATE:ExactName]
+- Only ONE [NAVIGATE:...] tag per response, using ONLY these exact names:
   Main Gate (Kyambogo Road), Eastern Gate (Police Post), Western Gate (Faculty of Science),
   Administration Block (Senate), Guild Offices, Registrar's Office, Finance Department,
   Central Library (Main), E-Library, Faculty of Engineering Library,
@@ -112,33 +119,27 @@ RESPONSE RULES:
 #  GEMINI HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 def gemini_chat(messages):
-    """
-    Multi-turn chat via Gemini.
-    messages: list of {role, content} — 'assistant' role is mapped to 'model'.
-    System instruction is passed via the proper systemInstruction field.
-    """
+    """Multi-turn chat. Uses systemInstruction field (correct Gemini v1beta format)."""
     contents = []
     for m in messages:
         role = "model" if m["role"] == "assistant" else "user"
-        contents.append({
-            "role":  role,
-            "parts": [{"text": m["content"]}]
-        })
+        contents.append({"role": role, "parts": [{"text": m["content"]}]})
 
     payload = {
-        "systemInstruction": {
-            "parts": [{"text": CAMPUS_CONTEXT}]
-        },
+        "systemInstruction": {"parts": [{"text": CAMPUS_CONTEXT}]},
         "contents": contents,
-        "generationConfig": {
-            "temperature":     0.7,
-            "maxOutputTokens": 800,
-        },
+        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 800},
     }
 
     resp = requests.post(gemini_url(), json=payload, timeout=20)
 
-    # Surface the actual Gemini error message if the call fails
+    if resp.status_code == 403:
+        # Key restriction issue — give a clear actionable message
+        raise Exception(
+            "API key restriction: Go to console.cloud.google.com/apis/credentials, "
+            "click your key, set Application Restrictions to 'None', save and restart."
+        )
+
     if not resp.ok:
         try:
             err = resp.json().get("error", {}).get("message", resp.text)
@@ -151,11 +152,11 @@ def gemini_chat(messages):
 
 
 def gemini_tip(faculty, name, stop):
-    """Single short tip for a First Day Guide tour stop."""
+    """Single personalised tip for a First Day Guide tour stop."""
     prompt = (
         f"You are a friendly senior student at Kyambogo University in Kampala, Uganda. "
         f"Write ONE short practical tip (2 sentences max, no intro phrase) about "
-        f'"{stop}" that is specifically useful for a {faculty} student named {name}. '
+        f'"{stop}" specifically useful for a {faculty} student named {name}. '
         f"Be specific and accurate to the real Kyambogo University campus."
     )
     payload = {
@@ -164,13 +165,13 @@ def gemini_tip(faculty, name, stop):
     }
     resp = requests.post(gemini_url(), json=payload, timeout=15)
     if not resp.ok:
-        raise Exception(f"Gemini tip {resp.status_code}")
+        raise Exception(f"Gemini tip {resp.status_code}: {resp.text[:200]}")
     data = resp.json()
     return data["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  CAMPUS DESTINATIONS
+#  CAMPUS DATA
 # ─────────────────────────────────────────────────────────────────────────────
 destinations = {
     "Main Gate (Kyambogo Road)":          [0.34795, 32.63142],
@@ -225,17 +226,9 @@ destinations = {
 }
 
 categories = {
-    "Entrances": [
-        "Main Gate (Kyambogo Road)", "Eastern Gate (Police Post)",
-        "Western Gate (Faculty of Science)",
-    ],
-    "Administration": [
-        "Administration Block (Senate)", "Guild Offices",
-        "Registrar's Office", "Finance Department",
-    ],
-    "Libraries": [
-        "Central Library (Main)", "E-Library", "Faculty of Engineering Library",
-    ],
+    "Entrances": ["Main Gate (Kyambogo Road)", "Eastern Gate (Police Post)", "Western Gate (Faculty of Science)"],
+    "Administration": ["Administration Block (Senate)", "Guild Offices", "Registrar's Office", "Finance Department"],
+    "Libraries": ["Central Library (Main)", "E-Library", "Faculty of Engineering Library"],
     "Faculties & Schools": [
         "Faculty of Engineering", "Faculty of Science", "Faculty of Arts and Humanities",
         "Faculty of Vocational Studies", "School of Education", "School of Management",
@@ -253,23 +246,12 @@ categories = {
         "Main Auditorium (Freedom Square)", "Engineering Lecture Hall",
         "Science Lecture Hall", "Arts Lecture Hall",
     ],
-    "Sports & Recreation": [
-        "Sports Ground (Main)", "Basketball Court", "Volleyball Court",
-        "Tennis Court", "University Gym",
-    ],
-    "Medical": [
-        "University Health Centre", "Dental Clinic", "Pharmacy",
-    ],
-    "Other Facilities": [
-        "ICT Center", "Printing Press", "University Bookshop",
-        "Chapel (St. Francis)", "Mosque", "Police Post", "University Farm",
-    ],
+    "Sports & Recreation": ["Sports Ground (Main)", "Basketball Court", "Volleyball Court", "Tennis Court", "University Gym"],
+    "Medical": ["University Health Centre", "Dental Clinic", "Pharmacy"],
+    "Other Facilities": ["ICT Center", "Printing Press", "University Bookshop", "Chapel (St. Francis)", "Mosque", "Police Post", "University Farm"],
 }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  HAVERSINE
-# ─────────────────────────────────────────────────────────────────────────────
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371
     d_lat = math.radians(lat2 - lat1)
@@ -287,11 +269,9 @@ def haversine(lat1, lon1, lat2, lon2):
 def index():
     return render_template("index.html")
 
-
 @app.route("/home")
 def home():
     return render_template("home.html", categories=categories)
-
 
 @app.route("/result", methods=["POST"])
 def result():
@@ -299,15 +279,11 @@ def result():
     if dest_name not in destinations:
         return "<h1>Invalid destination</h1>", 400
     lat, lon = destinations[dest_name]
-    return render_template("result.html",
-                           destination_name=dest_name,
-                           dest_lat=lat, dest_lon=lon)
-
+    return render_template("result.html", destination_name=dest_name, dest_lat=lat, dest_lon=lon)
 
 @app.route("/assistant")
 def assistant():
     return render_template("assistant.html")
-
 
 @app.route("/firstday")
 def firstday():
@@ -344,11 +320,11 @@ def api_ai_tip():
         return jsonify({"tip": tip})
     except Exception as e:
         print(f"[/api/ai-tip ERROR] {e}")
-        return jsonify({"tip": ""}), 200   # JS falls back to hardcoded text
+        return jsonify({"tip": ""}), 200
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  ROUTING ENDPOINT  (OSRM walking, straight-line fallback)
+#  ROUTING ENDPOINT
 # ─────────────────────────────────────────────────────────────────────────────
 @app.route("/api/route", methods=["POST"])
 def api_route():
@@ -361,7 +337,6 @@ def api_route():
     if not all([user_lat, user_lon, dest_lat, dest_lon]):
         return jsonify({"error": "Missing coordinates"}), 400
 
-    # ── OSRM (free, no API key needed) ──────────────────────────────────────
     try:
         osrm_url = (
             f"http://router.project-osrm.org/route/v1/foot/"
@@ -387,53 +362,35 @@ def api_route():
                     dist     = step.get("distance", 0)
                     if dist < 5:
                         continue
-                    if mtype == "depart":
-                        text = "Start walking"
-                    elif mtype == "arrive":
-                        text = "Arrive at your destination"
-                    elif mtype == "turn":
-                        text = f"Turn {modifier}"
-                    elif mtype in ("continue", "new name"):
-                        text = "Continue straight"
+                    if   mtype == "depart":    text = "Start walking"
+                    elif mtype == "arrive":    text = "Arrive at your destination"
+                    elif mtype == "turn":      text = f"Turn {modifier}"
+                    elif mtype in ("continue","new name"): text = "Continue straight"
                     elif mtype == "roundabout":
-                        exit_n = step.get("maneuver", {}).get("exit", "")
-                        text   = f"Take exit {exit_n} at the roundabout"
-                    else:
-                        text = mtype.replace("-", " ").capitalize()
-                    instructions.append({
-                        "text":     text,
-                        "distance": round(dist, 1),
-                        "time":     round(step.get("duration", 0) / 60, 1),
-                    })
+                        text = f"Take exit {step.get('maneuver',{}).get('exit','')} at the roundabout"
+                    else: text = mtype.replace("-"," ").capitalize()
+                    instructions.append({"text": text, "distance": round(dist,1),
+                                         "time": round(step.get("duration",0)/60,1)})
 
-            return jsonify({
-                "success":      True,
-                "path":         path,
-                "distance_km":  distance_km,
-                "duration_min": duration_min,
-                "instructions": instructions,
-                "source":       "osrm",
-            })
-
+            return jsonify({"success": True, "path": path,
+                            "distance_km": distance_km, "duration_min": duration_min,
+                            "instructions": instructions, "source": "osrm"})
     except Exception as e:
         print(f"[OSRM ERROR] {e}")
 
-    # ── Straight-line fallback ──────────────────────────────────────────────
     dist = haversine(user_lat, user_lon, dest_lat, dest_lon)
     return jsonify({
-        "success":      True,
-        "path":         [[user_lat, user_lon], [dest_lat, dest_lon]],
-        "distance_km":  round(dist, 2),
+        "success": True,
+        "path": [[user_lat, user_lon], [dest_lat, dest_lon]],
+        "distance_km": round(dist, 2),
         "duration_min": max(1, round(dist * 15)),
         "instructions": [
-            {"text": "Head toward your destination",
-             "distance": round(dist * 1000, 1), "time": round(dist * 15, 1)},
+            {"text": "Head toward your destination", "distance": round(dist*1000,1), "time": round(dist*15,1)},
             {"text": "Arrive at your destination", "distance": 0, "time": 0},
         ],
         "source": "direct",
     })
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
