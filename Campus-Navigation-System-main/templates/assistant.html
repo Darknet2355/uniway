@@ -414,89 +414,6 @@
     }
 
 
-    /* ── Floating AI Assistant Button ── */
-    .float-ai {
-      position: fixed;
-      bottom: 22px; right: 18px;
-      width: 58px; height: 58px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #0d2b4e, #1a4a7a);
-      border: 2.5px solid rgba(255,215,0,0.6);
-      box-shadow: 0 6px 24px rgba(0,0,0,0.35), 0 0 0 0 rgba(255,215,0,0.4);
-      cursor: pointer;
-      z-index: 9999;
-      display: flex; align-items: center; justify-content: center;
-      text-decoration: none;
-      animation: floatPulse 3s ease-in-out infinite;
-      transition: transform .2s, box-shadow .2s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .float-ai:hover, .float-ai:active {
-      transform: scale(1.1);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 0 8px rgba(255,215,0,0.15);
-    }
-    @keyframes floatPulse {
-      0%,100% { box-shadow: 0 6px 24px rgba(0,0,0,0.35), 0 0 0 0   rgba(255,215,0,0.5); }
-      50%      { box-shadow: 0 6px 24px rgba(0,0,0,0.35), 0 0 0 10px rgba(255,215,0,0); }
-    }
-
-    /* Mini rings on the float button */
-    .float-ai .f-ring {
-      position: absolute;
-      border-radius: 50%;
-      border: 1.5px solid transparent;
-    }
-    .float-ai .f-ring-1 {
-      width: 58px; height: 58px;
-      border-top-color: rgba(255,215,0,0.8);
-      border-right-color: rgba(255,215,0,0.2);
-      animation: ringRotate 2.5s linear infinite;
-    }
-    .float-ai .f-ring-2 {
-      width: 48px; height: 48px;
-      border-bottom-color: rgba(255,215,0,0.5);
-      border-left-color: rgba(255,215,0,0.15);
-      animation: ringRotate 1.8s linear infinite reverse;
-    }
-    .float-ai .f-logo {
-      width: 34px; height: 34px;
-      border-radius: 50%;
-      background: white;
-      display: flex; align-items: center; justify-content: center;
-      padding: 3px;
-      position: relative; z-index: 2;
-    }
-    .float-ai .f-logo img {
-      width: 100%; height: 100%;
-      object-fit: contain; border-radius: 50%;
-    }
-    .float-ai .f-dot {
-      position: absolute;
-      top: 5px; right: 5px;
-      width: 10px; height: 10px;
-      background: #4caf50;
-      border-radius: 50%;
-      border: 2px solid #0d2b4e;
-      z-index: 3;
-    }
-    /* tooltip */
-    .float-ai::before {
-      content: 'AI Assistant';
-      position: absolute;
-      right: 68px;
-      background: #0d2b4e;
-      color: #ffd700;
-      font-size: 0.72rem;
-      font-weight: 700;
-      padding: 5px 10px;
-      border-radius: 8px;
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .2s;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .float-ai:hover::before { opacity: 1; }
 
     /* ── Responsive ── */
     @media (max-width:380px) {
@@ -743,8 +660,9 @@ RESPONSE STYLE:
       } catch(err) {
         setAvatarThinking(false);
         typingEl.remove();
-        appendAiBubble('⚠️ Sorry, I couldn\'t connect right now. Please check your internet and try again.');
-        console.error(err);
+        // Show the real backend error so issues are obvious instead of a generic message
+        appendAiBubble('⚠️ ' + (err.message || 'Something went wrong. Please try again.'));
+        console.error('Assistant error:', err);
       }
 
       document.getElementById('sendBtn').disabled = false;
@@ -875,14 +793,5 @@ RESPONSE STYLE:
       window.speechSynthesis.speak(utt);
     }
   </script>
-  <!-- Floating AI Assistant Button -->
-  <a href="/assistant" class="float-ai" title="AI Campus Assistant">
-    <div class="f-ring f-ring-1"></div>
-    <div class="f-ring f-ring-2"></div>
-    <div class="f-logo">
-      <img src="/static/logo.png" alt="AI" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><circle cx=%2220%22 cy=%2220%22 r=%2219%22 fill=%22%230d2b4e%22/><text x=%2220%22 y=%2225%22 text-anchor=%22middle%22 fill=%22%23ffd700%22 font-size=%2211%22 font-weight=%22bold%22>KYU</text></svg>'">
-    </div>
-    <span class="f-dot"></span>
-  </a>
 </body>
 </html>
