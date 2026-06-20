@@ -304,6 +304,9 @@ def api_assistant():
         return jsonify({"reply": reply})
     except requests.exceptions.Timeout:
         return jsonify({"error": "Request timed out — please try again."}), 504
+    except requests.exceptions.ConnectionError as e:
+        print(f"[/api/assistant CONNECTION ERROR] {e}")
+        return jsonify({"error": "Could not reach Gemini API — check your server's internet connection."}), 502
     except Exception as e:
         print(f"[/api/assistant ERROR] {e}")
         return jsonify({"error": str(e)}), 500
