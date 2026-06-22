@@ -452,7 +452,7 @@
         <div class="fac-chip" onclick="pickFac(this,'Management')"><i class="fas fa-briefcase"></i>Management</div>
         <div class="fac-chip" onclick="pickFac(this,'Health Sciences')"><i class="fas fa-heartbeat"></i>Health Sciences</div>
         <div class="fac-chip" onclick="pickFac(this,'Vocational Studies')"><i class="fas fa-tools"></i>Vocational Studies</div>
-        <div class="fac-chip" onclick="pickFac(this,'Law')"><i class="fas fa-balance-scale"></i>Law</div>
+        <div class="fac-chip" onclick="pickFac(this,'Computing')"><i class="fas fa-laptop-code"></i>Computing</div>
       </div>
     </div>
     <!-- footer OUTSIDE scroll-body so it never scrolls away -->
@@ -988,5 +988,14 @@ function updateProgress() {
   document.getElementById('hdSub').textContent = subs[curPage] || '';
 }
 </script>
+  <!-- Floating AI Assistant Button -->
+  <a href="/assistant" class="float-ai" title="AI Campus Assistant">
+    <div class="f-ring f-ring-1"></div>
+    <div class="f-ring f-ring-2"></div>
+    <div class="f-logo">
+      <img src="/static/logo.png" alt="AI Assistant">
+    </div>
+    <span class="f-dot"></span>
+  </a>
 </body>
 </html>
