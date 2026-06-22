@@ -335,6 +335,7 @@
     .float-ai:hover::before { opacity: 1; }
 
   </style>
+  <script src="/static/offline.js"></script>
 </head>
 <body>
   <div class="container">
@@ -427,9 +428,40 @@
   </div>
   
   <script>
+    // ── Offline-first destination cache ──────────────────────────────────────
+    // Loaded once on page load, stored in localStorage so destination lookups
+    // work even with zero network on subsequent visits.
+    let destinationsCache = null;
+
+    async function loadDestinationsCache() {
+      try {
+        const res = await fetch('/api/destinations');
+        const data = await res.json();
+        destinationsCache = data.destinations;
+        localStorage.setItem('kyu_destinations', JSON.stringify(data.destinations));
+      } catch (e) {
+        // Offline — use whatever was cached on a previous online visit
+        const stored = localStorage.getItem('kyu_destinations');
+        if (stored) destinationsCache = JSON.parse(stored);
+      }
+    }
+    loadDestinationsCache();
+
     function selectDestination(place) {
-      document.getElementById('selectedDestination').value = place;
-      document.getElementById('destinationForm').submit();
+      // Look up coordinates from cache first so navigation works offline.
+      // The /result route also accepts a plain POST as a fallback if cache
+      // lookup fails for any reason (e.g. very first visit before cache loads).
+      const cached = destinationsCache || JSON.parse(localStorage.getItem('kyu_destinations') || 'null');
+
+      if (cached && cached[place]) {
+        const [lat, lon] = cached[place];
+        const url = `/result?name=${encodeURIComponent(place)}&lat=${lat}&lon=${lon}`;
+        window.location.href = url;
+      } else {
+        // No cached data available yet — fall back to the original POST form
+        document.getElementById('selectedDestination').value = place;
+        document.getElementById('destinationForm').submit();
+      }
     }
     
     function filterCategory(category) {
