@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import requests
 import math
+import os
 
 app = Flask(__name__)
 
@@ -27,12 +28,20 @@ app = Flask(__name__)
 #             → under "Application restrictions" choose "None" → Save
 # ──────────────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY = "AIzaSyB-6oJGbcUfV4vV_-L_MTeRWjHah2Xgu0g"
-GEMINI_MODEL   = "gemini-1.5-flash"
 GEMINI_BASE    = "https://generativelanguage.googleapis.com/v1beta/models"
 
+# Tried in order — if one model name is deprecated/renamed by Google,
+# the next one is used automatically instead of hard-failing.
+GEMINI_MODELS = [
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-latest",
+    "gemini-2.0-flash",
+    "gemini-2.5-flash",
+]
 
-def gemini_url():
-    return f"{GEMINI_BASE}/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+
+def gemini_url(model):
+    return f"{GEMINI_BASE}/{model}:generateContent?key={GEMINI_API_KEY}"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -119,7 +128,9 @@ RESPONSE RULES:
 #  GEMINI HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 def gemini_chat(messages):
-    """Multi-turn chat. Uses systemInstruction field (correct Gemini v1beta format)."""
+    """Multi-turn chat. Uses systemInstruction field (correct Gemini v1beta format).
+    Tries each model in GEMINI_MODELS until one works, so a single deprecated
+    model name doesn't break the assistant."""
     contents = []
     for m in messages:
         role = "model" if m["role"] == "assistant" else "user"
@@ -131,24 +142,37 @@ def gemini_chat(messages):
         "generationConfig": {"temperature": 0.7, "maxOutputTokens": 800},
     }
 
-    resp = requests.post(gemini_url(), json=payload, timeout=20)
+    last_error = None
+    for model in GEMINI_MODELS:
+        try:
+            resp = requests.post(gemini_url(model), json=payload, timeout=20)
+        except requests.exceptions.ConnectionError as e:
+            # No point trying other models if we can't reach Google at all
+            raise Exception(
+                f"Cannot reach Gemini API — check this server's internet connection. ({e})"
+            )
 
-    if resp.status_code == 403:
-        # Key restriction issue — give a clear actionable message
-        raise Exception(
-            "API key restriction: Go to console.cloud.google.com/apis/credentials, "
-            "click your key, set Application Restrictions to 'None', save and restart."
-        )
+        if resp.status_code == 403:
+            raise Exception(
+                "API key restriction (403): go to console.cloud.google.com/apis/credentials, "
+                "click your key, set Application Restrictions to 'None', save and restart. "
+                f"Raw response: {resp.text[:200]}"
+            )
 
-    if not resp.ok:
+        if resp.ok:
+            data = resp.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+
+        # Model not found / not supported — try the next one in the list
         try:
             err = resp.json().get("error", {}).get("message", resp.text)
         except Exception:
             err = resp.text
-        raise Exception(f"Gemini {resp.status_code}: {err}")
+        last_error = f"Gemini {resp.status_code} on model '{model}': {err}"
+        print(f"[gemini_chat] {last_error} — trying next model...")
 
-    data = resp.json()
-    return data["candidates"][0]["content"]["parts"][0]["text"]
+    # All models failed
+    raise Exception(last_error or "All Gemini models failed for an unknown reason.")
 
 
 def gemini_tip(faculty, name, stop):
@@ -163,11 +187,21 @@ def gemini_tip(faculty, name, stop):
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0.8, "maxOutputTokens": 120},
     }
-    resp = requests.post(gemini_url(), json=payload, timeout=15)
-    if not resp.ok:
-        raise Exception(f"Gemini tip {resp.status_code}: {resp.text[:200]}")
-    data = resp.json()
-    return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+    last_error = None
+    for model in GEMINI_MODELS:
+        try:
+            resp = requests.post(gemini_url(model), json=payload, timeout=15)
+        except requests.exceptions.ConnectionError as e:
+            raise Exception(f"Cannot reach Gemini API: {e}")
+
+        if resp.ok:
+            data = resp.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+        last_error = f"Gemini tip {resp.status_code} on '{model}': {resp.text[:200]}"
+
+    raise Exception(last_error or "All Gemini models failed for the tip request.")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -263,6 +297,36 @@ def haversine(lat1, lon1, lat2, lon2):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+#  OFFLINE-FIRST: JSON data endpoint
+#  The service worker caches this on first load. After that, the frontend
+#  can look up any destination's coordinates entirely client-side — no
+#  server round-trip needed, so /result-style navigation keeps working
+#  even with zero internet connection.
+# ─────────────────────────────────────────────────────────────────────────────
+@app.route("/api/destinations")
+def api_destinations():
+    return jsonify({
+        "destinations": destinations,
+        "categories": categories,
+    })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Service worker must be served from the root (or have this header) to be
+#  allowed to control pages outside /static/ — i.e. /, /home, /result, etc.
+#  Without this, the offline cache would only ever apply to static assets.
+# ─────────────────────────────────────────────────────────────────────────────
+@app.route("/service-worker.js")
+def service_worker():
+    response = send_from_directory(
+        os.path.join(app.root_path, "static"), "service-worker.js"
+    )
+    response.headers["Service-Worker-Allowed"] = "/"
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 #  PAGE ROUTES
 # ─────────────────────────────────────────────────────────────────────────────
 @app.route("/")
@@ -273,12 +337,29 @@ def index():
 def home():
     return render_template("home.html", categories=categories)
 
-@app.route("/result", methods=["POST"])
+@app.route("/result", methods=["GET", "POST"])
 def result():
-    dest_name = request.form.get("destination", "").strip()
-    if dest_name not in destinations:
-        return "<h1>Invalid destination</h1>", 400
-    lat, lon = destinations[dest_name]
+    if request.method == "POST":
+        dest_name = request.form.get("destination", "").strip()
+        if dest_name not in destinations:
+            return "<h1>Invalid destination</h1>", 400
+        lat, lon = destinations[dest_name]
+    else:
+        # GET path — used by offline-first navigation. The frontend already
+        # has the destinations list cached (from /api/destinations) and
+        # passes everything as query params, so this works even if the
+        # service worker serves this exact URL from cache with no network.
+        dest_name = request.args.get("name", "").strip()
+        try:
+            lat = float(request.args.get("lat", ""))
+            lon = float(request.args.get("lon", ""))
+        except ValueError:
+            # No valid params — fall back to server-side lookup if the name matches
+            if dest_name in destinations:
+                lat, lon = destinations[dest_name]
+            else:
+                return "<h1>Invalid destination</h1>", 400
+
     return render_template("result.html", destination_name=dest_name, dest_lat=lat, dest_lon=lon)
 
 @app.route("/assistant")
