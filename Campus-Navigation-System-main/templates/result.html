@@ -483,6 +483,7 @@
     .float-ai:hover::before { opacity: 1; }
 
   </style>
+  <script src="/static/offline.js"></script>
 </head>
 <body>
   <div class="header">
@@ -743,7 +744,14 @@
       .then(r => r.json())
       .then(data => {
         document.getElementById('loading').style.display = 'none';
-        
+
+        if (data.offline) {
+          // Service worker intercepted this — genuinely no network at all
+          document.getElementById('status').innerHTML = '📡 Offline — showing straight-line estimate';
+          drawDirectLine(userLat, userLon, DEST_LAT, DEST_LON);
+          return;
+        }
+
         if (data.success) {
           // Remove existing route
           if (routeLayer) map.removeLayer(routeLayer);
@@ -778,7 +786,11 @@
       })
       .catch(err => {
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('status').innerHTML = '⚠️ Connection error';
+        if (window.KYU_OFFLINE || !navigator.onLine) {
+          document.getElementById('status').innerHTML = '📡 Offline — showing straight-line estimate';
+        } else {
+          document.getElementById('status').innerHTML = '⚠️ Connection error — showing straight-line estimate';
+        }
         drawDirectLine(userLat, userLon, DEST_LAT, DEST_LON);
       });
     }
