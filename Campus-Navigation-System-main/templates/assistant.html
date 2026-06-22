@@ -420,6 +420,7 @@
       .bubble { max-width:86%; font-size:0.84rem; }
     }
   </style>
+  <script src="/static/offline.js"></script>
 </head>
 <body>
 
@@ -638,6 +639,17 @@ RESPONSE STYLE:
       const input = document.getElementById('msgInput');
       const text  = input.value.trim();
       if (!text) return;
+
+      // AI chat genuinely needs a live connection — fail clearly and fast
+      // instead of showing a generic network error after a timeout.
+      if (!navigator.onLine) {
+        appendUserBubble(text);
+        appendAiBubble('📡 You\'re offline right now. The AI assistant needs an internet connection — your message wasn\'t sent. Reconnect and try again.');
+        input.value = '';
+        input.style.height = 'auto';
+        scrollBottom();
+        return;
+      }
 
       input.value = '';
       input.style.height = 'auto';
