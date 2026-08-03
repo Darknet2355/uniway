@@ -69,8 +69,8 @@ MEDICAL:
 RELIGIOUS: Chapel (St. Francis) and Mosque — east side, open to all students
 
 STUDENT HOSTELS (east side, near Eastern Gate):
-- Girls Hostel Block A and B, Boys Hostel Block C and D
-- International Students Hostel nearby. All have 24-hour security
+- Nanziri hall, Mandela hall, Kulubya hall, Pearl hall
+- North hall nearby. All have 24-hour security
 
 SPORTS (west side): Sports Ground, Basketball/Volleyball/Tennis Courts, University Gym
 
@@ -92,10 +92,9 @@ RESPONSE RULES:
   Administration Block (Senate), Guild Offices, Registrar's Office, Finance Department,
   Central Library (Main), E-Library, Faculty of Engineering Library,
   Faculty of Engineering, Faculty of Science, Faculty of Arts and Humanities,
-  Faculty of Vocational Studies, School of Education, School of Management, School of Law,
-  School of Health Sciences, School of Built Environment,
-  Girls Hostel (Block A), Girls Hostel (Block B), Boys Hostel (Block C), Boys Hostel (Block D),
-  International Students Hostel, Main Cafeteria, Faculty of Engineering Canteen, Science Canteen,
+  Faculty of Vocational Studies, School of Education, School of Management and entrepreneurship,School of Computing and Information Science, School of Built Environment,
+ Nanziri hall, Mandela hall, Kulubya hall, Pearl hall,
+  North hall, Main Cafeteria, Faculty of Engineering Canteen, Science Canteen,
   Student Market, Bank (Stanbic), Bank (Centenary), Main Auditorium (Freedom Square),
   Engineering Lecture Hall, Science Lecture Hall, Arts Lecture Hall,
   Sports Ground (Main), Basketball Court, Volleyball Court, Tennis Court, University Gym,
@@ -107,37 +106,37 @@ RESPONSE RULES:
 #  DESTINATIONS & CATEGORIES
 # ─────────────────────────────────────────────────────────────────────────────
 destinations = {
-    "Main Gate (Kyambogo Road)":          [0.34785, 32.63135],
-    "Eastern Gate (Police Post)":         [0.34925, 32.63345],
-    "Western Gate (Faculty of Science)":  [0.35175, 32.62715],
-    "Administration Block (Senate)":      [0.35028, 32.62962],
+    "Main Gate (Kyambogo Road)":          [0.347455, 32.625685],
+    "Eastern Gate (Banda)":         [0.345694, 32.634164],
+    "Western Gate (kabaka's gate)":  [0.353559, 32.630148],
+    "Administration Block (Senate)":      [0.34779187235189896, 32.63195052740961],
     "Guild Offices":                      [0.35042, 32.62955],
     "Registrar's Office":                 [0.35015, 32.62930],
     "Finance Department":                 [0.34995, 32.62945],
     "Central Library (Main)":             [0.34971, 32.62848],
     "E-Library":                          [0.34985, 32.62815],
     "Faculty of Engineering Library":     [0.35215, 32.62695],
-    "Faculty of Engineering":             [0.35231, 32.62705],
-    "Faculty of Science":                 [0.35175, 32.62754],
+    "Faculty of Engineering":             [0.3484334211999567, 32.627732720712174],
+    "Faculty of Science":                 [0.348591, 32.626383],
     "Faculty of Arts and Humanities":     [0.35192, 32.62885],
     "Faculty of Vocational Studies":      [0.35285, 32.62645],
-    "School of Education":                [0.34925, 32.63018],
-    "School of Management":               [0.35065, 32.62985],
-    "School of Law":                      [0.35125, 32.62945],
-    "School of Health Sciences":          [0.35315, 32.62685],
+    "School of Education":                [0.349675, 32.626812],
+    "School of Management and Entrepreneurship":               [0.35065, 32.62985],
+    "School of Computing and Information Science":           [0.348237, 32.626478],
+    
     "School of Built Environment":        [0.35255, 32.62735],
-    "Girls Hostel (Block A)":             [0.34605, 32.63223],
-    "Girls Hostel (Block B)":             [0.34635, 32.63205],
-    "Boys Hostel (Block C)":              [0.34558, 32.63075],
-    "Boys Hostel (Block D)":              [0.34525, 32.63115],
-    "International Students Hostel":      [0.34715, 32.63185],
+    "Nanziri hall":             [0.3470722484421752, 32.62976017122643],
+    "Mandela hall":             [0.346255, 32.630710],
+    "North hall":              [0.354156, 32.625517],
+    "Kulubya hall":              [0.352325, 32.626041],
+    "Pearl hall":      [0.3515699040866617, 32.62514045208313],
     "Main Cafeteria":                     [0.35055, 32.62898],
     "Faculty of Engineering Canteen":     [0.35245, 32.62685],
     "Science Canteen":                    [0.35185, 32.62765],
-    "Student Market":                     [0.34885, 32.63125],
+   
     "Bank (Stanbic)":                     [0.34845, 32.63105],
     "Bank (Centenary)":                   [0.34865, 32.63085],
-    "Main Auditorium (Freedom Square)":   [0.34908, 32.62925],
+    "Main Auditorium (CTF)":   [0.34908, 32.62925],
     "Engineering Lecture Hall":           [0.35225, 32.62725],
     "Science Lecture Hall":               [0.35165, 32.62785],
     "Arts Lecture Hall":                  [0.35195, 32.62865],
@@ -168,8 +167,8 @@ categories = {
         "School of Law", "School of Health Sciences", "School of Built Environment",
     ],
     "Student Accommodation": [
-        "Girls Hostel (Block A)", "Girls Hostel (Block B)",
-        "Boys Hostel (Block C)", "Boys Hostel (Block D)", "International Students Hostel",
+        "Naziri (Block A)", "Mandela (Block B)",
+        "kulubya (Block C)", "Pearl (Block D)", "North hall",
     ],
     "Dining & Shopping": [
         "Main Cafeteria", "Faculty of Engineering Canteen", "Science Canteen",
