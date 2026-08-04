@@ -37,9 +37,9 @@ For anything unrelated, politely redirect the user back to campus topics.
 CAMPUS KNOWLEDGE:
 
 ENTRANCES:
-- Main Gate (Kyambogo Road): primary entrance, 24/7 security, most taxis drop here
-- Eastern Gate (Police Post): east side, closest to student hostels
-- Western Gate (Faculty of Science): west side, near Engineering and Science
+- Main Gate (Kyambogo Road): primary entrance, 24/7 security, most taxis drop here, near the west-end pitch and faculty of science
+- Eastern Gate (Banda gate): east side, closest to student halls and east-end pitch
+- Western Gate (kabaka's gate): west side near kyambog primary school
 
 ADMINISTRATION (Mon-Fri 8am-5pm):
 - Administration Block (Senate): student IDs, Registrar, Finance Department
