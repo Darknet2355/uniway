@@ -334,6 +334,136 @@
     }
     .float-ai:hover::before { opacity: 1; }
 
+    /* ── Near Me ── */
+    .near-me-tag {
+      background: linear-gradient(135deg, #0d2b4e, #1a4a7a);
+      color: #ffd700;
+      border: 2px solid #ffd700;
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 3px 10px rgba(13,43,78,0.3);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+    .near-me-tag:hover { transform: scale(1.04); box-shadow: 0 5px 15px rgba(13,43,78,0.4); }
+    .near-me-tag.loading { opacity: 0.7; pointer-events: none; }
+
+    /* Near Me results section */
+    #nearMeSection {
+      display: none;
+      margin-bottom: 20px;
+      animation: fadeSlideIn 0.3s ease;
+    }
+    @keyframes fadeSlideIn {
+      from { opacity:0; transform:translateY(-10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .near-me-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+    .near-me-header h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0d2b4e;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .near-me-header h4 i { color: #ffd700; }
+    .near-me-close {
+      background: none;
+      border: none;
+      color: #aaa;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .near-me-close:hover { background: #e8edf3; color: #555; }
+
+    .near-card {
+      background: white;
+      border-radius: 15px;
+      padding: 13px 15px;
+      margin-bottom: 9px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.22s;
+    }
+    .near-card:hover { border-color: #ffd700; transform: translateY(-2px); }
+    .near-rank {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0d2b4e, #1a4a7a);
+      color: #ffd700;
+      font-size: 0.75rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .near-card .location-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #f0f3f8, #e4e8f0);
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0d2b4e;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .near-info { flex: 1; min-width: 0; }
+    .near-name {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.88rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .near-dist {
+      font-size: 0.75rem;
+      color: #0d2b4e;
+      font-weight: 600;
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .near-dist i { color: #ffd700; }
+
+    /* GPS error banner */
+    .gps-error {
+      background: #fff3cd;
+      border: 1.5px solid #ffc107;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 0.83rem;
+      color: #7a5f00;
+      margin-bottom: 12px;
+      display: none;
+    }
+
   </style>
   <script src="/static/offline.js"></script>
 </head>
@@ -355,9 +485,12 @@
     </div>
     
     <div class="categories" id="categories">
-      <span class="category-tag active" onclick="filterCategory('all')"><i class="fas fa-map"></i> All</span>
+      <button class="near-me-tag" id="nearMeBtn" onclick="activateNearMe()">
+        <i class="fas fa-location-crosshairs"></i> Near Me
+      </button>
+      <span class="category-tag active" onclick="filterCategory('all', this)"><i class="fas fa-map"></i> All</span>
       {% for category, places in categories.items() %}
-      <span class="category-tag" onclick="filterCategory('{{ category }}')">
+      <span class="category-tag" onclick="filterCategory('{{ category }}', this)">
         {% if category == "Entrances" %}<i class="fas fa-door-open"></i>
         {% elif category == "Administration" %}<i class="fas fa-building"></i>
         {% elif category == "Libraries" %}<i class="fas fa-book"></i>
@@ -373,6 +506,21 @@
       {% endfor %}
     </div>
     
+    <!-- Near Me results (shown above the main list) -->
+    <div id="nearMeSection">
+      <div class="gps-error" id="gpsError">
+        <i class="fas fa-triangle-exclamation"></i>
+        <span id="gpsErrorMsg">Unable to get your location.</span>
+      </div>
+      <div class="near-me-header">
+        <h4><i class="fas fa-location-crosshairs"></i> Closest to you right now</h4>
+        <button class="near-me-close" onclick="closeNearMe()">
+          <i class="fas fa-times"></i> Close
+        </button>
+      </div>
+      <div id="nearMeCards"></div>
+    </div>
+
     <form id="destinationForm" method="post" action="/result">
       <input type="hidden" name="destination" id="selectedDestination">
       <div class="locations-container" id="locationsContainer">
@@ -428,97 +576,228 @@
   </div>
   
   <script>
-    // ── Offline-first destination cache ──────────────────────────────────────
-    // Loaded once on page load, stored in localStorage so destination lookups
-    // work even with zero network on subsequent visits.
+    // ── Destination cache (offline-first) ────────────────────────────────────
     let destinationsCache = null;
 
     async function loadDestinationsCache() {
       try {
-        const res = await fetch('/api/destinations');
+        const res  = await fetch('/api/destinations');
         const data = await res.json();
         destinationsCache = data.destinations;
         localStorage.setItem('kyu_destinations', JSON.stringify(data.destinations));
       } catch (e) {
-        // Offline — use whatever was cached on a previous online visit
         const stored = localStorage.getItem('kyu_destinations');
         if (stored) destinationsCache = JSON.parse(stored);
       }
     }
     loadDestinationsCache();
 
+    // ── Navigate to a destination ─────────────────────────────────────────────
     function selectDestination(place) {
-      // Look up coordinates from cache first so navigation works offline.
-      // The /result route also accepts a plain POST as a fallback if cache
-      // lookup fails for any reason (e.g. very first visit before cache loads).
-      const cached = destinationsCache || JSON.parse(localStorage.getItem('kyu_destinations') || 'null');
-
+      const cached = destinationsCache ||
+                     JSON.parse(localStorage.getItem('kyu_destinations') || 'null');
       if (cached && cached[place]) {
         const [lat, lon] = cached[place];
-        const url = `/result?name=${encodeURIComponent(place)}&lat=${lat}&lon=${lon}`;
-        window.location.href = url;
+        window.location.href = `/result?name=${encodeURIComponent(place)}&lat=${lat}&lon=${lon}`;
       } else {
-        // No cached data available yet — fall back to the original POST form
         document.getElementById('selectedDestination').value = place;
         document.getElementById('destinationForm').submit();
       }
     }
-    
-    function filterCategory(category) {
-      // Update active category
-      document.querySelectorAll('.category-tag').forEach(tag => {
-        tag.classList.remove('active');
-      });
-      event.target.classList.add('active');
-      
-      // Filter sections
+
+    // ── Filter by category ────────────────────────────────────────────────────
+    function filterCategory(category, el) {
+      // Close Near Me if open
+      closeNearMe(true);
+
+      // Update active tab
+      document.querySelectorAll('.category-tag').forEach(t => t.classList.remove('active'));
+      if (el) el.classList.add('active');
+
       const sections = document.querySelectorAll('.category-section');
       if (category === 'all') {
-        sections.forEach(section => {
-          section.style.display = 'block';
-        });
+        sections.forEach(s => s.style.display = 'block');
       } else {
-        sections.forEach(section => {
-          if (section.dataset.category === category) {
-            section.style.display = 'block';
-          } else {
-            section.style.display = 'none';
-          }
+        sections.forEach(s => {
+          s.style.display = s.dataset.category === category ? 'block' : 'none';
         });
       }
+      document.getElementById('locationsContainer').style.display = 'block';
     }
-    
+
+    // ── Search filter ─────────────────────────────────────────────────────────
     function filterLocations() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const locationCards = document.querySelectorAll('.location-card');
-      
-      locationCards.forEach(card => {
-        const locationName = card.querySelector('.location-name').textContent.toLowerCase();
-        const section = card.closest('.category-section');
-        
-        if (locationName.includes(searchTerm)) {
-          card.style.display = 'flex';
-          section.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-      
-      // Hide empty sections
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      closeNearMe(true);
+
+      document.querySelectorAll('.category-tag').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.category-section').forEach(section => {
-        const visibleCards = section.querySelectorAll('.location-card[style="display: flex;"]');
-        if (visibleCards.length === 0) {
-          section.style.display = 'none';
-        }
+        let visible = false;
+        section.querySelectorAll('.location-card').forEach(card => {
+          const match = card.querySelector('.location-name')
+                            .textContent.toLowerCase().includes(q);
+          card.style.display = match ? 'flex' : 'none';
+          if (match) visible = true;
+        });
+        section.style.display = visible ? 'block' : 'none';
       });
     }
-    
-    // Reset filters
+
     document.getElementById('searchInput').addEventListener('search', function() {
-      if (this.value === '') {
-        location.reload();
-      }
+      if (this.value === '') { location.reload(); }
     });
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  NEAR ME
+    // ════════════════════════════════════════════════════════════════════════
+
+    function haversineM(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 +
+                Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
+                Math.sin(dLon/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function fmtDist(metres) {
+      if (metres < 1000) return Math.round(metres) + 'm away';
+      return (metres / 1000).toFixed(1) + 'km away';
+    }
+
+    function fmtWalk(metres) {
+      const mins = Math.max(1, Math.round(metres / 80)); // ~80m/min walking pace
+      return mins === 1 ? '~1 min walk' : `~${mins} min walk`;
+    }
+
+    function iconForPlace(name) {
+      const n = name.toLowerCase();
+      if (n.includes('gate'))       return 'fa-door-open';
+      if (n.includes('library'))    return 'fa-book';
+      if (n.includes('hall') && n.includes('hostel')) return 'fa-bed';
+      if (n.includes('nanziri') || n.includes('mandela') || n.includes('kulubya') ||
+          n.includes('pearl') || n.includes('north hall')) return 'fa-bed';
+      if (n.includes('cafeteria') || n.includes('canteen')) return 'fa-utensils';
+      if (n.includes('bank'))       return 'fa-piggy-bank';
+      if (n.includes('court') || n.includes('sports') || n.includes('gym')) return 'fa-futbol';
+      if (n.includes('health') || n.includes('clinic') || n.includes('pharmacy')) return 'fa-hospital-user';
+      if (n.includes('chapel') || n.includes('mosque')) return 'fa-place-of-worship';
+      if (n.includes('ict') || n.includes('computing')) return 'fa-laptop';
+      if (n.includes('farm'))       return 'fa-seedling';
+      return 'fa-map-marker-alt';
+    }
+
+    function activateNearMe() {
+      const btn = document.getElementById('nearMeBtn');
+      btn.classList.add('loading');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Locating...';
+
+      if (!navigator.geolocation) {
+        showGpsError('Geolocation is not supported by your browser.');
+        resetNearMeBtn();
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const userLat = pos.coords.latitude;
+          const userLon = pos.coords.longitude;
+          renderNearMe(userLat, userLon);
+          resetNearMeBtn();
+        },
+        (err) => {
+          const msgs = {
+            1: 'Location permission denied. Please allow location access and try again.',
+            2: 'Could not detect your position. Make sure GPS is enabled.',
+            3: 'Location request timed out. Please try again.',
+          };
+          showGpsError(msgs[err.code] || 'Location error. Please try again.');
+          document.getElementById('nearMeSection').style.display = 'block';
+          document.getElementById('locationsContainer').style.display = 'none';
+          resetNearMeBtn();
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+      );
+    }
+
+    function resetNearMeBtn() {
+      const btn = document.getElementById('nearMeBtn');
+      btn.classList.remove('loading');
+      btn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Near Me';
+    }
+
+    function renderNearMe(userLat, userLon) {
+      const dests = destinationsCache ||
+                    JSON.parse(localStorage.getItem('kyu_destinations') || '{}');
+
+      if (!Object.keys(dests).length) {
+        showGpsError('Destination data not loaded yet. Please wait a moment and try again.');
+        return;
+      }
+
+      // Calculate distance to every destination, sort ascending
+      const sorted = Object.entries(dests)
+        .map(([name, [lat, lon]]) => ({
+          name, lat, lon,
+          dist: haversineM(userLat, userLon, lat, lon)
+        }))
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 8); // show 8 closest
+
+      const cardsEl = document.getElementById('nearMeCards');
+      cardsEl.innerHTML = sorted.map((d, i) => `
+        <div class="near-card" onclick="selectDestination('${escAttr(d.name)}')">
+          <div class="near-rank">${i + 1}</div>
+          <div class="location-icon">
+            <i class="fas ${iconForPlace(d.name)}"></i>
+          </div>
+          <div class="near-info">
+            <div class="near-name">${escHtml(d.name)}</div>
+            <div class="near-dist">
+              <i class="fas fa-person-walking"></i>
+              ${fmtDist(d.dist)} &nbsp;·&nbsp; ${fmtWalk(d.dist)}
+            </div>
+          </div>
+          <i class="fas fa-chevron-right" style="color:#ccc;font-size:.85rem"></i>
+        </div>
+      `).join('');
+
+      // Hide GPS error, show results
+      document.getElementById('gpsError').style.display = 'none';
+      document.getElementById('nearMeSection').style.display = 'block';
+
+      // Hide the normal category list while Near Me is active
+      document.getElementById('locationsContainer').style.display = 'none';
+
+      // Deactivate category tabs
+      document.querySelectorAll('.category-tag').forEach(t => t.classList.remove('active'));
+    }
+
+    function showGpsError(msg) {
+      document.getElementById('gpsErrorMsg').textContent = msg;
+      document.getElementById('gpsError').style.display = 'block';
+      document.getElementById('nearMeSection').style.display = 'block';
+      document.getElementById('nearMeCards').innerHTML = '';
+      document.getElementById('locationsContainer').style.display = 'none';
+    }
+
+    function closeNearMe(silent) {
+      document.getElementById('nearMeSection').style.display = 'none';
+      document.getElementById('gpsError').style.display = 'none';
+      document.getElementById('locationsContainer').style.display = 'block';
+      if (!silent) {
+        // Re-activate All tab
+        document.querySelectorAll('.category-tag').forEach(t => t.classList.remove('active'));
+        const allTag = document.querySelector('.category-tag');
+        if (allTag) allTag.classList.add('active');
+        document.querySelectorAll('.category-section').forEach(s => s.style.display = 'block');
+        document.querySelectorAll('.location-card').forEach(c => c.style.display = 'flex');
+      }
+    }
+
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escAttr(s) { return String(s).replace(/'/g,"\'"); }
   </script>
   <!-- Floating AI Assistant Button -->
   <a href="/assistant" class="float-ai" title="AI Campus Assistant">
