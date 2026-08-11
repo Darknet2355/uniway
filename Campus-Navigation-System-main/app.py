@@ -227,7 +227,7 @@ categories = {
     "Faculties & Schools": [
         "Faculty of Engineering", "Faculty of Science", "Faculty of Arts and Humanities",
         "Faculty of Vocational Studies", "School of Education", "School of Management",
-        "School of Built Environment",
+        "School of Built Environment", "School of Computing and Information Science"
     ],
     "Student Accommodation": [
         "Naziri", "Mandela",
