@@ -32,7 +32,7 @@ GROQ_MODEL   = "llama-3.3-70b-versatile"
 #  Password is stored in .env — set ADMIN_PASSWORD=yourpassword
 #  On Render/deployment: add ADMIN_PASSWORD in Environment Variables dashboard
 # ─────────────────────────────────────────────────────────────────────────────
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "kyu@admin2025")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 
 # Announcements are stored in a JSON file so they survive server restarts.
 # The file is created automatically on first use.
@@ -227,7 +227,7 @@ categories = {
     "Faculties & Schools": [
         "Faculty of Engineering", "Faculty of Science", "Faculty of Arts and Humanities",
         "Faculty of Vocational Studies", "School of Education", "School of Management",
-        "School of Built Environment", "School of Computing and Information Science"
+        "School of Built Environment",
     ],
     "Student Accommodation": [
         "Naziri", "Mandela",
@@ -337,11 +337,23 @@ def assistant():
 def firstday():
     return render_template("firstday.html")
 
+@app.route("/emergency")
+def emergency():
+    return render_template("emergency.html")
+
 @app.route("/service-worker.js")
 def service_worker():
     resp = send_from_directory(os.path.join(app.root_path, "static"), "service-worker.js")
     resp.headers["Service-Worker-Allowed"] = "/"
     resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
+@app.route("/manifest.json")
+def manifest():
+    resp = send_from_directory(os.path.join(app.root_path, "static"), "manifest.json")
+    resp.headers["Content-Type"] = "application/manifest+json"
+    resp.headers["Cache-Control"] = "public, max-age=86400"
     return resp
 
 
