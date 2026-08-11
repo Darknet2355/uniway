@@ -1,0 +1,95 @@
+{
+  "name": "Kyambogo University Campus Navigator",
+  "short_name": "KYU Navigator",
+  "description": "Navigate Kyambogo University campus with GPS, AI assistant, and offline support",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d2b4e",
+  "theme_color": "#0d2b4e",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["education", "navigation", "utilities"],
+  "icons": [
+    {
+      "src": "/static/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Navigate Campus",
+      "short_name": "Navigate",
+      "description": "Find your way around campus",
+      "url": "/home",
+      "icons": [{ "src": "/static/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "AI Assistant",
+      "short_name": "Assistant",
+      "description": "Ask anything about campus",
+      "url": "/assistant",
+      "icons": [{ "src": "/static/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "First Day Guide",
+      "short_name": "Guide",
+      "description": "Campus tour for new students",
+      "url": "/firstday",
+      "icons": [{ "src": "/static/icon-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "KYU Campus Navigator home screen"
+    }
+  ]
+}
