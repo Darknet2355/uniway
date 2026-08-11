@@ -9,6 +9,7 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 import requests
 import math
+import json
 import os
 
 # Load .env file first thing
@@ -25,6 +26,30 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "kyu-dev-key")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_URL     = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL   = "llama-3.3-70b-versatile"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  ADMIN PANEL
+#  Password is stored in .env — set ADMIN_PASSWORD=yourpassword
+#  On Render/deployment: add ADMIN_PASSWORD in Environment Variables dashboard
+# ─────────────────────────────────────────────────────────────────────────────
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "kyu@admin2025")
+
+# Announcements are stored in a JSON file so they survive server restarts.
+# The file is created automatically on first use.
+ANNOUNCEMENTS_FILE = os.path.join(os.path.dirname(__file__), "announcements.json")
+
+def load_announcements():
+    if os.path.exists(ANNOUNCEMENTS_FILE):
+        try:
+            with open(ANNOUNCEMENTS_FILE, "r") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def save_announcements(data):
+    with open(ANNOUNCEMENTS_FILE, "w") as f:
+        json.dump(data, f, indent=2)
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  CAMPUS KNOWLEDGE
@@ -423,3 +448,125 @@ def api_route():
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  ADMIN PANEL ROUTES
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.route("/admin")
+def admin():
+    return render_template("admin.html")
+
+
+@app.route("/api/admin/login", methods=["POST"])
+def admin_login():
+    """Verify admin password. Returns a session token the frontend stores."""
+    data = request.get_json()
+    password = data.get("password", "")
+    if password == ADMIN_PASSWORD:
+        # Simple token: hash of password + secret key
+        import hashlib
+        token = hashlib.sha256(
+            (ADMIN_PASSWORD + app.secret_key).encode()
+        ).hexdigest()[:32]
+        return jsonify({"ok": True, "token": token})
+    return jsonify({"ok": False, "error": "Incorrect password"}), 401
+
+
+@app.route("/api/admin/verify", methods=["POST"])
+def admin_verify():
+    """Check if a stored token is still valid."""
+    import hashlib
+    data  = request.get_json()
+    token = data.get("token", "")
+    valid_token = hashlib.sha256(
+        (ADMIN_PASSWORD + app.secret_key).encode()
+    ).hexdigest()[:32]
+    return jsonify({"ok": token == valid_token})
+
+
+@app.route("/api/admin/announcements", methods=["GET"])
+def get_announcements():
+    return jsonify(load_announcements())
+
+
+@app.route("/api/admin/announcements", methods=["POST"])
+def save_announcement():
+    """Add a new announcement."""
+    import hashlib, time
+    data  = request.get_json()
+    token = data.get("token", "")
+    valid_token = hashlib.sha256(
+        (ADMIN_PASSWORD + app.secret_key).encode()
+    ).hexdigest()[:32]
+    if token != valid_token:
+        return jsonify({"error": "Unauthorised"}), 401
+
+    msg  = data.get("msg", "").strip()
+    kind = data.get("type", "info")
+    if not msg:
+        return jsonify({"error": "Message is required"}), 400
+
+    announcements = load_announcements()
+    announcements.insert(0, {
+        "id":   int(time.time() * 1000),
+        "msg":  msg,
+        "type": kind,
+        "time": __import__("datetime").datetime.now().strftime("%d %b %Y, %H:%M"),
+    })
+    save_announcements(announcements)
+    return jsonify({"ok": True, "count": len(announcements)})
+
+
+@app.route("/api/admin/announcements/<int:ann_id>", methods=["DELETE"])
+def delete_announcement(ann_id):
+    """Delete an announcement by id."""
+    import hashlib
+    token = request.args.get("token", "")
+    valid_token = hashlib.sha256(
+        (ADMIN_PASSWORD + app.secret_key).encode()
+    ).hexdigest()[:32]
+    if token != valid_token:
+        return jsonify({"error": "Unauthorised"}), 401
+
+    announcements = load_announcements()
+    announcements = [a for a in announcements if a.get("id") != ann_id]
+    save_announcements(announcements)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/export", methods=["GET"])
+def admin_export():
+    """Download current destinations as a Python file."""
+    import hashlib
+    token = request.args.get("token", "")
+    valid_token = hashlib.sha256(
+        (ADMIN_PASSWORD + app.secret_key).encode()
+    ).hexdigest()[:32]
+    if token != valid_token:
+        return jsonify({"error": "Unauthorised"}), 401
+
+    lines = ["# Auto-exported from KYU Admin Panel\n",
+             "# Paste this destinations dict into app.py\n\n",
+             "destinations = {\n"]
+    for name, (lat, lon) in destinations.items():
+        lines.append(f'    "{name}": [{lat}, {lon}],\n')
+    lines.append("}\n")
+
+    from flask import Response
+    return Response(
+        "".join(lines),
+        mimetype="text/plain",
+        headers={"Content-Disposition": "attachment; filename=destinations.py"}
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  PUBLIC ANNOUNCEMENTS  (shown on home screen to all users)
+# ─────────────────────────────────────────────────────────────────────────────
+@app.route("/api/announcements", methods=["GET"])
+def public_announcements():
+    """Return announcements for display on the home screen."""
+    return jsonify(load_announcements())
+
