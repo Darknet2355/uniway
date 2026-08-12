@@ -630,63 +630,53 @@
       .addTo(map)
       .bindPopup(`<b>📍 ${DEST_NAME}</b>`);
 
-    // Check if location is within Kyambogo bounds
-    function isValidKyambogoLocation(lat, lon) {
-      const MIN_LAT = 0.34;
-      const MAX_LAT = 0.36;
-      const MIN_LON = 32.62;
-      const MAX_LON = 32.64;
-      
-      return lat >= MIN_LAT && lat <= MAX_LAT && lon >= MIN_LON && lon <= MAX_LON;
-    }
+    // ── GPS tracking — uses native Geolocation API only ──────────────────────
+    // NOTE: map.locate() is NOT used because it falls back to IP-based
+    // geolocation which can place you anywhere in the city/country.
+    // navigator.geolocation with enableHighAccuracy uses your device GPS only.
 
-    // Request location permission
+    let watchId = null;
+    let routeFetched = false;
+
     function requestLocationPermission() {
       document.getElementById('permissionOverlay').style.display = 'none';
-      
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            // Success
-            map.locate({ setView: false, enableHighAccuracy: true, watch: true });
-          },
-          (error) => {
-            // Error
-            console.error('Geolocation error:', error);
-            if (error.code === 1) {
-              document.getElementById('permissionOverlay').style.display = 'flex';
-            }
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-      }
+      startTracking();
     }
 
-    // Handle location found
-    function onLocationFound(e) {
-      const lat = e.latitude;
-      const lon = e.longitude;
-      const accuracy = e.accuracy;
-      
-      // Validate location is within Kyambogo
-      if (!isValidKyambogoLocation(lat, lon)) {
-        console.warn('Location outside Kyambogo:', lat, lon);
-        document.getElementById('status').innerHTML = '⚠️ Location outside campus';
+    function startTracking() {
+      if (!navigator.geolocation) {
+        document.getElementById('status').innerHTML = '⚠️ Geolocation not supported';
         return;
       }
-      
+
+      watchId = navigator.geolocation.watchPosition(
+        onPositionUpdate,
+        onPositionError,
+        {
+          enableHighAccuracy: true,  // forces GPS chip, not Wi-Fi/IP
+          timeout: 15000,
+          maximumAge: 5000,          // accept position up to 5s old
+        }
+      );
+    }
+
+    function onPositionUpdate(position) {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const accuracy = Math.round(position.coords.accuracy);
+
       currentLocation = { lat, lon, accuracy };
-      
-      document.getElementById('accuracy').textContent = Math.round(accuracy);
-      document.getElementById('accuracy-badge').innerHTML = `<i class="fas fa-check"></i> ${Math.round(accuracy)}m`;
-      
-      // Update user marker
+
+      // Update accuracy badge
+      document.getElementById('accuracy-badge').innerHTML =
+        `<i class="fas fa-check"></i> ±${accuracy}m`;
+
+      // Move or create the blue user dot
       if (userMarker) {
         userMarker.setLatLng([lat, lon]);
         userAccuracyCircle.setLatLng([lat, lon]);
         userAccuracyCircle.setRadius(accuracy);
       } else {
-        // Accuracy circle
         userAccuracyCircle = L.circle([lat, lon], {
           radius: accuracy,
           color: '#2196F3',
@@ -695,53 +685,42 @@
           fillColor: '#2196F3',
           fillOpacity: 0.1
         }).addTo(map);
-        
-        // User marker
+
         userMarker = L.circleMarker([lat, lon], {
           radius: 8,
-          fillColor: "#2196F3",
-          color: "#ffffff",
+          fillColor: '#2196F3',
+          color: '#ffffff',
           weight: 3,
           opacity: 1,
           fillOpacity: 0.9
         }).addTo(map)
           .bindPopup('<b>You are here</b>');
-      }
 
-      document.getElementById('status').innerHTML = `📍 Location acquired`;
-      
-      // Get route
-      getRoute(lat, lon);
-    }
-
-    function onLocationError(e) {
-      console.error('Location error:', e);
-      
-      if (e.code === 1) {
-        // Permission denied
-        document.getElementById('permissionOverlay').style.display = 'flex';
-        document.getElementById('status').innerHTML = '⚠️ Location access required';
-      } else {
-        document.getElementById('status').innerHTML = '⚠️ Could not get location';
-      }
-    }
-
-    // Start location tracking
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        () => {
-          // Permission granted
-          map.on('locationfound', onLocationFound);
-          map.on('locationerror', onLocationError);
-          map.locate({ setView: false, enableHighAccuracy: true, watch: true });
-        },
-        (error) => {
-          if (error.code === 1) {
-            document.getElementById('permissionOverlay').style.display = 'flex';
-          }
+        // Only fetch the route once on first position fix.
+        // Subsequent GPS updates just move the dot silently —
+        // no reload, no map reset, no flicker.
+        if (!routeFetched) {
+          routeFetched = true;
+          document.getElementById('status').innerHTML = '📍 Location found · calculating route…';
+          getRoute(lat, lon);
         }
-      );
+      }
     }
+
+    function onPositionError(err) {
+      const msgs = {
+        1: '⚠️ Location permission denied — tap to allow',
+        2: '⚠️ GPS signal unavailable — try going outdoors',
+        3: '⚠️ Location timed out — retrying…',
+      };
+      document.getElementById('status').innerHTML = msgs[err.code] || '⚠️ Location error';
+      if (err.code === 1) {
+        document.getElementById('permissionOverlay').style.display = 'flex';
+      }
+    }
+
+    // Start tracking immediately
+    startTracking();
 
     function getRoute(userLat, userLon) {
       document.getElementById('loading').style.display = 'flex';
@@ -892,7 +871,9 @@
         map.setView([currentLocation.lat, currentLocation.lon], 18);
         if (userMarker) userMarker.openPopup();
       } else {
-        map.locate();
+        // No fix yet — restart GPS tracking
+        document.getElementById('status').innerHTML = '📡 Getting your location…';
+        startTracking();
       }
     });
 
