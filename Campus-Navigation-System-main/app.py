@@ -88,7 +88,7 @@ ADMINISTRATION (Mon–Fri 8am–5pm):
 
 LIBRARIES:
 - Central Library (Main) — modern main library
-- E-Library / Computer facilities next to or within library complexes
+- Barclays library
 - Faculty libraries exist inside several faculties (Engineering, Education, Special Needs, etc.)
 
 FACULTIES & SCHOOLS:
@@ -163,7 +163,7 @@ RESPONSE RULES:
   School of Vocational Studies, School of Art and Industrial Design,
   Nanziri Hall, Mandela Hall, Kulubya Hall, Pearl Hall, North Hall,
   Main Cafeteria, Student Market, Bank (Stanbic), Bank (Centenary),
-  Main Auditorium (Freedom Square), Engineering Lecture Hall, Science Lecture Hall, Arts Lecture Hall,
+  Main Auditorium (Freedom Square), Engineering Lecture Hall, Science Lecture Hall, Arts Lecture Hall, CLB
   Sports Ground (Main), Basketball Court, Volleyball Court, Tennis Court, University Gym,
   University Health Centre, ICT Centre, Kakumba Chapel, Mosque, Police Post, University Farm
 """.strip()# ─────────────────────────────────────────────────────────────────────────────
@@ -171,26 +171,26 @@ RESPONSE RULES:
 # ─────────────────────────────────────────────────────────────────────────────
 destinations = {
     "Main Gate (Kyambogo Road)":          [0.347455, 32.625685],
-    "Eastern Gate (Banda)":         [0.345694, 32.634164],
+    "Eastern Gate (Banda)":         [0.345695, 32.634164],
     "Western Gate (kabaka's gate)":  [0.353559, 32.630148],
     "Administration Block (Senate)":      [0.34779187235189896, 32.63195052740961],
-    "Guild Offices":                      [0.35042, 32.62955],
-    "Registrar's Office":                 [0.35015, 32.62930],
+    "Guild Offices":                      [0.3463636492094773, 32.63158933363924],
+    "Registrar's Office":                 [0.3489221696979512, 32.631910975929365],
     "Finance Department":                 [0.34995, 32.62945],
-    "Central Library (Main)":             [0.34971, 32.62848],
-    "E-Library":                          [0.34985, 32.62815],
+    "Central Library (Main)":             [0.35073081755084545, 32.63071742522396],
+    "Barclays library":                          [0.34985, 32.62815],
     "Faculty of Engineering Library":     [0.35215, 32.62695],
     "Faculty of Engineering":             [0.3484334211999567, 32.627732720712174],
     "Faculty of Science":                 [0.348591, 32.626383],
     "Faculty of Arts and Humanities":     [0.35192, 32.62885],
     "Faculty of Vocational Studies":      [0.35285, 32.62645],
     "School of Education":                [0.349675, 32.626812],
-    "School of Management and Entrepreneurship":               [0.35065, 32.62985],
+    "School of Management and Entrepreneurship":               [0.34662248037070525, 32.63125318312978],
     "School of Computing and Information Science":           [0.348237, 32.626478],
     
     "School of Built Environment":        [0.35255, 32.62735],
     "Nanziri hall":             [0.3470722484421752, 32.62976017122643],
-    "Mandela hall":             [0.346255, 32.630710],
+    "Mandela hall":             [0.34646352745329057, 32.63075059518825],
     "North hall":              [0.354156, 32.625517],
     "Kulubya hall":              [0.352325, 32.626041],
     "Pearl hall":      [0.3515699040866617, 32.62514045208313],
@@ -198,32 +198,33 @@ destinations = {
     "Faculty of Engineering Canteen":     [0.35245, 32.62685],
     "Science Canteen":                    [0.35185, 32.62765],
    
-    "Bank (Stanbic)":                     [0.34845, 32.63105],
+    "Bank (Stanbic)":                     [0.347531, 32.631249],
     "Bank (Centenary)":                   [0.34865, 32.63085],
-    "Main Auditorium (CTF)":   [0.34908, 32.62925],
-    "Engineering Lecture Hall":           [0.35225, 32.62725],
+    "Main Auditorium (CTF)":   [0.349281, 32.630632],
+    "CLB":                                [0.351741, 32.628255],
+    "Engineering Lecture Hall":           [0.34878998164693015, 32.62896825530938],
     "Science Lecture Hall":               [0.35165, 32.62785],
     "Arts Lecture Hall":                  [0.35195, 32.62865],
-    "Sports Ground (Main)":               [0.35358, 32.62488],
-    "Basketball Court":                   [0.35315, 32.62525],
-    "Volleyball Court":                   [0.35325, 32.62545],
-    "Tennis Court":                       [0.35305, 32.62565],
+    "Sports Ground (Main)":               [0.346439, 32.633731],
+    "Basketball Court":                   [0.345591, 32.632703],
+    "Volleyball Court":                   [0.346287, 32.632545],
+    "Tennis Court":                       0.346287, 32.632545],
     "University Gym":                     [0.35275, 32.62585],
     "University Health Centre":           [0.35125, 32.63015],
     
     
-    "ICT Center":                         [0.35025, 32.62875],
+    "ICT Center":                         [0.347497, 32.631850],
     
-    "Kakumba Chapel":               [0.34825, 32.63055],
-    "Mosque":                             [0.34795, 32.63185],
-    "Police Post":                        [0.34915, 32.63335],
-    "University Farm":                    [0.35425, 32.62515],
+    "Kakumba Chapel":               [0.347684, 32.628838],
+    "Mosque":                             [0.352368, 32.626659],
+    "Police Post":                        [0.350233711844405, 32.62608847340605],
+    "University Farm":                    [0.355726, 32.634225],
 }
 
 categories = {
     "Entrances": ["Main Gate (Kyambogo Road)", "Eastern Gate (banda gate)", "Western Gate (kabaka's gate)"],
     "Administration": ["Administration Block (Senate)", "Guild Offices", "Registrar's Office", "Finance Department"],
-    "Libraries": ["Central Library (Main)", "E-Library", "Faculty of Engineering Library"],
+    "Libraries": ["Central Library (Main)", "Barclays library", "Faculty of Engineering Library"],
     "Faculties & Schools": [
         "Faculty of Engineering", "Faculty of Science", "Faculty of Arts and Humanities",
         "Faculty of Vocational Studies", "School of Education", "School of Management",
@@ -238,8 +239,8 @@ categories = {
         "Student Market", "Bank (Stanbic)", "Bank (Centenary)",
     ],
     "Auditoriums & Halls": [
-        "Main Auditorium (Freedom Square)", "Engineering Lecture Hall",
-        "Science Lecture Hall", "Arts Lecture Hall",
+        "Main Auditorium (CTF)", "Engineering Lecture Hall",
+        "Science Lecture Hall", "Arts Lecture Hall","CLB"
     ],
     "Sports & Recreation": ["Sports Ground (Main)", "Basketball Court", "Volleyball Court", "Tennis Court", "University Gym"],
     "Medical": ["University Health Centre"],
