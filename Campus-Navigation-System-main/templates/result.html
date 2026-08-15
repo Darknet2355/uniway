@@ -256,9 +256,84 @@
     
     .instructions {
       border-top: 1px solid #eee;
-      padding-top: 12px;
+      padding-top: 8px;
     }
-    
+
+    /* ── Direction mode toggle ── */
+    .dir-toggle-bar {
+      display: flex;
+      gap: 0;
+      background: #f0f2f5;
+      border-radius: 10px;
+      padding: 3px;
+      margin-bottom: 10px;
+    }
+    .dir-toggle-btn {
+      flex: 1;
+      padding: 7px 6px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: #888;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .dir-toggle-btn.active {
+      background: white;
+      color: #0d2b4e;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+    .dir-toggle-btn.active.ai-btn { color: #1a4a7a; }
+
+    /* ── AI loading dots inside the panel ── */
+    .ai-loading-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      font-size: 0.82rem;
+      color: #888;
+    }
+    .ai-dots { display:inline-flex; gap:4px; }
+    .ai-dots span {
+      width:6px; height:6px; background:#0d2b4e; border-radius:50%; opacity:.3;
+      animation: aidot 1.2s ease-in-out infinite;
+    }
+    .ai-dots span:nth-child(2){animation-delay:.2s}
+    .ai-dots span:nth-child(3){animation-delay:.4s}
+    @keyframes aidot{0%,60%,100%{opacity:.3}30%{opacity:1}}
+
+    /* ── Active first step highlight ── */
+    .instruction-item--active .instruction-icon {
+      background: linear-gradient(135deg,#0d2b4e,#1a4a7a);
+      color: #ffd700;
+    }
+    .instruction-item--active .instruction-text {
+      font-weight: 600;
+      color: #0d2b4e;
+    }
+
+    /* ── Distance badge inside instruction text ── */
+    .instr-dist-badge {
+      display: inline-block;
+      background: #e8f0fe;
+      color: #1a4a7a;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-left: 6px;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
     .instruction-item {
       display: flex;
       align-items: center;
@@ -282,9 +357,7 @@
     
     .instruction-text {
       flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      line-height: 1.4;
     }
     
     .instruction-distance {
@@ -573,6 +646,15 @@
       </div>
       
       <div class="instructions" id="instructions">
+        <!-- AI / OSRM toggle — shown once route loads -->
+        <div class="dir-toggle-bar" id="dirToggleBar" style="display:none">
+          <button class="dir-toggle-btn ai-btn active" id="btnAI" onclick="setDirMode('ai')">
+            <i class="fas fa-robot"></i> AI Guided
+          </button>
+          <button class="dir-toggle-btn" id="btnRaw" onclick="setDirMode('raw')">
+            <i class="fas fa-map-signs"></i> Step by Step
+          </button>
+        </div>
         <div class="instruction-item">
           <div class="instruction-icon"><i class="fas fa-circle-info"></i></div>
           <div class="instruction-text">Waiting for route...</div>
@@ -729,10 +811,11 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          lat: userLat,
-          lon: userLon,
-          dest_lat: DEST_LAT,
-          dest_lon: DEST_LON
+          lat:       userLat,
+          lon:       userLon,
+          dest_lat:  DEST_LAT,
+          dest_lon:  DEST_LON,
+          dest_name: DEST_NAME   // sent so AI can reference it by name
         })
       })
       .then(r => r.json())
@@ -740,17 +823,14 @@
         document.getElementById('loading').style.display = 'none';
 
         if (data.offline) {
-          // Service worker intercepted this — genuinely no network at all
           document.getElementById('status').innerHTML = '📡 Offline — showing straight-line estimate';
           drawDirectLine(userLat, userLon, DEST_LAT, DEST_LON);
           return;
         }
 
         if (data.success) {
-          // Remove existing route
           if (routeLayer) map.removeLayer(routeLayer);
           
-          // Add new route
           routeLayer = L.polyline(data.path, {
             color: '#2196F3',
             weight: 6,
@@ -759,22 +839,21 @@
             lineJoin: 'round'
           }).addTo(map);
           
-          // Update stats
           document.getElementById('distance').textContent = data.distance_km;
           document.getElementById('duration').textContent = data.duration_min;
           document.getElementById('status').innerHTML = `✓ Route found • ${data.duration_min} min`;
           
-          // Fit bounds
           const bounds = routeLayer.getBounds();
           if (bounds.isValid()) {
             map.fitBounds(bounds, { padding: [50, 50] });
           }
-          
-          // Add instructions
-          displayInstructions(data.instructions);
+
+          // Display AI-enriched directions as primary narrative,
+          // with OSRM distance data for each step card
+          displayInstructions(data.instructions, data.ai_directions);
+
         } else {
           document.getElementById('status').innerHTML = '❌ Could not find route';
-          // Draw straight line as fallback
           drawDirectLine(userLat, userLon, DEST_LAT, DEST_LON);
         }
       })
@@ -817,39 +896,137 @@
       return R * c;
     }
 
-    function displayInstructions(instructions) {
-      const container = document.getElementById('instructions');
-      container.innerHTML = '';
-      
-      if (!instructions || instructions.length === 0) {
-        container.innerHTML = `
-          <div class="instruction-item">
-            <div class="instruction-icon"><i class="fas fa-route"></i></div>
-            <div class="instruction-text">Follow the blue path</div>
-          </div>
-        `;
+    // Stores AI directions for the speak button
+    let currentAiDirections = [];
+
+    // ── Direction mode: 'ai' = Groq narrated, 'raw' = OSRM step-by-step ──────
+    let dirMode          = 'ai';
+    let storedOsrmSteps  = [];
+    let storedAiDirs     = [];
+
+    function setDirMode(mode) {
+      dirMode = mode;
+      document.getElementById('btnAI').classList.toggle('active', mode === 'ai');
+      document.getElementById('btnRaw').classList.toggle('active', mode === 'raw');
+      renderSteps();
+    }
+
+    function displayInstructions(osrmSteps, aiDirections) {
+      storedOsrmSteps = osrmSteps  || [];
+      storedAiDirs    = aiDirections || [];
+
+      // Store for voice
+      currentAiDirections = storedAiDirs.length > 0
+        ? storedAiDirs
+        : storedOsrmSteps.map(s => s.text);
+
+      // Show the toggle bar now that we have data
+      const bar = document.getElementById('dirToggleBar');
+      if (bar) bar.style.display = 'flex';
+
+      // If AI directions haven't arrived yet, show loading dots
+      if (storedAiDirs.length === 0 && storedOsrmSteps.length > 0) {
+        showAiLoading();
         return;
       }
-      
-      instructions.slice(0, 3).forEach((inst, index) => {
-        const instruction = document.createElement('div');
-        instruction.className = 'instruction-item';
-        
-        let icon = 'fa-arrow-right';
-        if (inst.text.toLowerCase().includes('left')) icon = 'fa-arrow-left';
-        if (inst.text.toLowerCase().includes('right')) icon = 'fa-arrow-right';
-        if (inst.text.toLowerCase().includes('straight')) icon = 'fa-arrow-up';
-        if (inst.text.toLowerCase().includes('arrive')) icon = 'fa-flag-checkered';
-        
-        instruction.innerHTML = `
-          <div class="instruction-icon"><i class="fas ${icon}"></i></div>
-          <div class="instruction-text">${inst.text}</div>
-          <div class="instruction-distance">${inst.distance}m</div>
-        `;
-        
-        container.appendChild(instruction);
-      });
+
+      renderSteps();
     }
+
+    function showAiLoading() {
+      const container = document.getElementById('instructions');
+      // Keep the toggle bar, replace only the step content
+      const bar = document.getElementById('dirToggleBar');
+      container.innerHTML = '';
+      if (bar) container.appendChild(bar);
+      const loader = document.createElement('div');
+      loader.className = 'ai-loading-row';
+      loader.id = 'aiLoadingRow';
+      loader.innerHTML = `
+        <div class="instruction-icon" style="background:linear-gradient(135deg,#0d2b4e,#1a4a7a);color:#ffd700">
+          <i class="fas fa-robot"></i>
+        </div>
+        <span>AI is building your campus directions</span>
+        <div class="ai-dots"><span></span><span></span><span></span></div>`;
+      container.appendChild(loader);
+    }
+
+    function renderSteps() {
+      const container = document.getElementById('instructions');
+      const bar = document.getElementById('dirToggleBar');
+
+      // Clear step content, preserve toggle bar
+      container.innerHTML = '';
+      if (bar) container.appendChild(bar);
+
+      const useAI   = dirMode === 'ai' && storedAiDirs.length > 0;
+      const steps   = storedOsrmSteps;
+      const aiText  = storedAiDirs;
+      const count   = Math.max(steps.length, aiText.length);
+
+      if (count === 0) {
+        const el = document.createElement('div');
+        el.className = 'instruction-item';
+        el.innerHTML = `<div class="instruction-icon"><i class="fas fa-route"></i></div>
+                        <div class="instruction-text">Follow the blue path on the map</div>`;
+        container.appendChild(el);
+        return;
+      }
+
+      for (let i = 0; i < count; i++) {
+        const step    = steps[i]  || {};
+        const text    = useAI ? (aiText[i] || step.text || '') : (step.text || aiText[i] || '');
+        const dist    = step.distance || 0;
+        const rawText = (step.text || '').toLowerCase();
+
+        // Icon from OSRM direction type
+        let icon = 'fa-person-walking';
+        if (rawText.includes('left'))                                     icon = 'fa-turn-left';
+        else if (rawText.includes('right'))                               icon = 'fa-turn-right';
+        else if (rawText.includes('straight') || rawText.includes('continue')) icon = 'fa-arrow-up';
+        else if (rawText.includes('arrive'))                              icon = 'fa-flag-checkered';
+        else if (rawText.includes('start') || rawText.includes('depart')) icon = 'fa-play';
+
+        const isFirst = i === 0;
+        const el = document.createElement('div');
+        el.className = 'instruction-item' + (isFirst ? ' instruction-item--active' : '');
+        el.innerHTML = `
+          <div class="instruction-icon">
+            <i class="fas ${icon}"></i>
+          </div>
+          <div class="instruction-text">
+            ${text}${dist > 0 ? `<span class="instr-dist-badge">${dist < 1000 ? dist + 'm' : (dist/1000).toFixed(1) + 'km'}</span>` : ''}
+          </div>`;
+        container.appendChild(el);
+      }
+    }
+
+    // Speak button — reads AI directions aloud
+    document.getElementById('speak-btn').addEventListener('click', () => {
+      if (!('speechSynthesis' in window)) {
+        alert('Text-to-speech is not supported in this browser.');
+        return;
+      }
+      window.speechSynthesis.cancel();
+
+      if (currentAiDirections.length === 0) {
+        window.speechSynthesis.speak(
+          new SpeechSynthesisUtterance(`Navigate to ${DEST_NAME}. Follow the blue path on the map.`)
+        );
+        return;
+      }
+
+      // Read the first step immediately, then pause between subsequent steps
+      const toSpeak = [`Navigating to ${DEST_NAME}.`, ...currentAiDirections.slice(0, 5)];
+      toSpeak.forEach((text, i) => {
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.rate  = 0.92;
+        utt.pitch = 1;
+        // Small pause between steps
+        if (i > 0) utt.text = '... ' + text;
+        window.speechSynthesis.speak(utt);
+      });
+    });
 
     // Compass
     if (window.DeviceOrientationEvent) {
