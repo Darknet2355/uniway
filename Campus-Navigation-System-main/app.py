@@ -208,7 +208,7 @@ destinations = {
     "Sports Ground (Main)":               [0.346439, 32.633731],
     "Basketball Court":                   [0.345591, 32.632703],
     "Volleyball Court":                   [0.346287, 32.632545],
-    "Tennis Court":                       0.346287, 32.632545],
+    "Tennis Court":                       [0.346287, 32.632545],
     "University Gym":                     [0.35275, 32.62585],
     "University Health Centre":           [0.35125, 32.63015],
     
