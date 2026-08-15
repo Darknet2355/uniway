@@ -440,9 +440,11 @@ def api_route():
                     elif mtype == "roundabout":  text = f"Take exit {step.get('maneuver',{}).get('exit','')} at the roundabout"
                     else:                        text = mtype.replace("-", " ").capitalize()
                     instructions.append({"text": text, "distance": round(dist, 1), "time": round(step.get("duration", 0) / 60, 1)})
-                    ai_directions = enrich_directions_with_ai(raw_steps, dest_name, distance_km, duration_min)
+                    # ai_directions = enrich_directions_with_ai(raw_steps, dest_name, distance_km, duration_min)
+            # Then in the return jsonify(...) block, add:
+# "ai_directions": ai_directions,
 
-            return jsonify({"success": True, "path": path, "distance_km": distance_km, "duration_min": duration_min, "instructions": instructions,"ai_directions": ai_directions, "source": "osrm"})
+            return jsonify({"success": True, "path": path, "distance_km": distance_km, "duration_min": duration_min, "instructions": instructions, "source": "osrm"})
 
     except Exception as e:
         print(f"[OSRM ERROR] {e}")
@@ -459,59 +461,59 @@ def api_route():
         ],
         "source": "direct",
     })
-def enrich_directions_with_ai(raw_steps, dest_name, distance_km, duration_min):
-    """
-    Takes raw OSRM turn-by-turn steps and asks Groq to rewrite them as
-    campus-aware human directions using real Kyambogo landmark names.
-    Returns a list of direction strings, or the raw steps text if Groq fails.
-    """
-    if not GROQ_API_KEY or not raw_steps:
-        return [s["text"] for s in raw_steps]
+# def enrich_directions_with_ai(raw_steps, dest_name, distance_km, duration_min):
+#     """
+#     Takes raw OSRM turn-by-turn steps and asks Groq to rewrite them as
+#     campus-aware human directions using real Kyambogo landmark names.
+#     Returns a list of direction strings, or the raw steps text if Groq fails.
+#     """
+#     if not GROQ_API_KEY or not raw_steps:
+#         return [s["text"] for s in raw_steps]
 
-    # Build a compact summary of the OSRM steps for the prompt
-    steps_text = "\n".join(
-        f"  Step {i+1}: {s['text']} ({s['distance']}m)"
-        for i, s in enumerate(raw_steps)
-        if s["distance"] > 0
-    )
+#     # Build a compact summary of the OSRM steps for the prompt
+#     steps_text = "\n".join(
+#         f"  Step {i+1}: {s['text']} ({s['distance']}m)"
+#         for i, s in enumerate(raw_steps)
+#         if s["distance"] > 0
+#     )
 
-    prompt = f"""You are a campus guide at Kyambogo University in Kampala, Uganda.
-A student is walking to: {dest_name}
-Total distance: {distance_km}km, approximately {duration_min} minute(s) on foot.
+#     prompt = f"""You are a campus guide at Kyambogo University in Kampala, Uganda.
+# A student is walking to: {dest_name}
+# Total distance: {distance_km}km, approximately {duration_min} minute(s) on foot.
 
-The navigation system produced these raw turn-by-turn steps:
-{steps_text}
+# The navigation system produced these raw turn-by-turn steps:
+# {steps_text}
 
-Rewrite these as friendly, natural walking directions for a student on campus.
-Use real Kyambogo University landmark names where they make sense — for example:
-"Pass the Administration Block on your left", "Keep walking past the Main Cafeteria",
-"The library will be ahead of you", "Turn left at the flagpole near Freedom Square".
+# Rewrite these as friendly, natural walking directions for a student on campus.
+# Use real Kyambogo University landmark names where they make sense — for example:
+# "Pass the Administration Block on your left", "Keep walking past the Main Cafeteria",
+# "The library will be ahead of you", "Turn left at the flagpole near Freedom Square".
 
-Rules:
-- Keep each direction short (one sentence)
-- Only include steps that have meaningful distance (skip steps under 10m)
-- Match the number of steps — do not add extra steps that aren't in the original
-- Return ONLY a JSON array of strings, nothing else. Example:
-  ["Start walking from the Main Gate toward the Admin Block", "Turn left past the cafeteria", "The library entrance is on your right"]
-"""
+# Rules:
+# - Keep each direction short (one sentence)
+# - Only include steps that have meaningful distance (skip steps under 10m)
+# - Match the number of steps — do not add extra steps that aren't in the original
+# - Return ONLY a JSON array of strings, nothing else. Example:
+#   ["Start walking from the Main Gate toward the Admin Block", "Turn left past the cafeteria", "The library entrance is on your right"]
+# """
 
-    try:
-        response = groq_chat([{"role": "user", "content": prompt}])
+#     try:
+#         response = groq_chat([{"role": "user", "content": prompt}])
 
-        # Parse the JSON array from Groq's response
-        import re
-        # Find the JSON array in the response (Groq sometimes adds preamble)
-        match = re.search(r'\[.*?\]', response, re.DOTALL)
-        if match:
-            directions = json.loads(match.group(0))
-            if isinstance(directions, list) and len(directions) > 0:
-                return directions
+#         # Parse the JSON array from Groq's response
+#         import re
+#         # Find the JSON array in the response (Groq sometimes adds preamble)
+#         match = re.search(r'\[.*?\]', response, re.DOTALL)
+#         if match:
+#             directions = json.loads(match.group(0))
+#             if isinstance(directions, list) and len(directions) > 0:
+#                 return directions
 
-    except Exception as e:
-        print(f"[AI DIRECTIONS ERROR] {e}")
+#     except Exception as e:
+#         print(f"[AI DIRECTIONS ERROR] {e}")
 
-    # Fallback: return the original OSRM text if AI fails
-    return [s["text"] for s in raw_steps if s["distance"] > 0]
+#     # Fallback: return the original OSRM text if AI fails
+#     return [s["text"] for s in raw_steps if s["distance"] > 0]
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
