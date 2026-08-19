@@ -25,7 +25,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "kyu-dev-key")
 # ─────────────────────────────────────────────────────────────────────────────
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_URL     = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL   = "llama-3.3-70b-versatile"
+GROQ_MODEL   = "openai/gpt-oss-120b"
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  ADMIN PANEL
